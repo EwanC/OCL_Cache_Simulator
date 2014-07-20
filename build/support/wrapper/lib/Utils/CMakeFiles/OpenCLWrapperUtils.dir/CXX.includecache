@@ -1,0 +1,26 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+../support/wrapper/include/Utils/FileUtils.h
+string
+-
+boost/filesystem.hpp
+-
+
+/home/ewan/Desktop/visualizer/support/wrapper/lib/Utils/src/Utils.cpp
+Utils/FileUtils.h
+/home/ewan/Desktop/visualizer/support/wrapper/lib/Utils/src/Utils/FileUtils.h
+fstream
+-
+stdexcept
+-
+sstream
+-
+boost/filesystem.hpp
+-
+

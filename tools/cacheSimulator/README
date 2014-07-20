@@ -1,0 +1,32 @@
+Author: EWAN CRAWFORD, ewan.cr@gmail.com
+        s1032792
+
+Cache Simulator for processing output from thread scheduler
+===========================================================
+usage: ./cache_sim  
+                    [filename]
+                    [cache size in KB]
+                    line size in bytes]
+                    [associativity]
+                    [replacementpolicy: LRU, LFU, MRU, RAND]
+                    [write ploicy: WBWA, WTNA]
+
+
+Config used for experiments:
+ ./cache_sim input.txt 16 128 4 LRU WTNA
+
+Files 
+===========================================================
+
+cache.cpp - Contains functions relating to initalization
+            of cache as well as cache operations to read
+            and write.
+             
+main.cpp - Reads input file and chooses workgroups to 
+           simulate, before executing cache accesses 
+
+parse.cpp - Parses command line arguments
+
+stats.cpp - Contains functions to update statistics,
+            usually called on each cache access. As
+            Well as functions for printing data

@@ -1,0 +1,1 @@
+#cmakedefine KERNEL_DIRECTORY "@KERNEL_DIRECTORY@"

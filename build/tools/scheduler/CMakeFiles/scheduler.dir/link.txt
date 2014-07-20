@@ -1,0 +1,1 @@
+/usr/bin/g++   -Wall -std=c++0x -O0    CMakeFiles/scheduler.dir/parse.cpp.o CMakeFiles/scheduler.dir/trace.cpp.o CMakeFiles/scheduler.dir/schedule.cpp.o CMakeFiles/scheduler.dir/warp.cpp.o CMakeFiles/scheduler.dir/main.cpp.o  -o scheduler -rdynamic 

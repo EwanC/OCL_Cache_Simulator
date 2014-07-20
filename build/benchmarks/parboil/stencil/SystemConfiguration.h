@@ -1,0 +1,1 @@
+#define KERNEL_DIRECTORY "/home/ewan/Desktop/visualizer/benchmarks/parboil/stencil/"
