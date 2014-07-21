@@ -37,7 +37,7 @@ void enqueWriteCommands(Queue& queue);
 void enqueReadCommands(Queue& queue);
 void run(const Context* context, Queue& queue);
 void freeMemory();
-int read_data(float *A0, int nx,int ny,int nz); 
+int read_data(float *A0, unsigned int nx,unsigned int ny,unsigned int nz); 
 
 //-----------------------------------------------------------------------------
 // Runtime components.
@@ -57,7 +57,7 @@ Buffer* d_temp;
 
 FILE* fd;
 
-int nx,ny,nz;
+unsigned int nx,ny,nz;
 int size;
 int iteration;
 float c0=1.0f/6.0f;
@@ -155,11 +155,11 @@ void initialization(int argc, char** argv) {
 //-----------------------------------------------------------------------------
 void freeMemory() {
   
-
   delete[] h_A0;
   delete[] h_Anext;
   
-
+  delete kernel;
+  delete platform;
 }
 
 //-----------------------------------------------------------------------------
@@ -215,7 +215,7 @@ void setKernelArguments() {
 void run(const Context* context, Queue& queue) {
  
   //only use 1D thread block
-  int tx =64;
+  unsigned int tx =64;
   size_t block[3] = {tx,1,1};
   size_t grid[3] = {(nx-2+tx-1)/tx*tx,ny-2,nz-2};
   // size_t offset[3] = {1,1,1};
@@ -242,19 +242,12 @@ void run(const Context* context, Queue& queue) {
 
   queue.finish();
 
-
-
-  printf("GPU kernel done\n");
-  
- 
-
-
 }
 
-int read_data(float *A0, int nx,int ny,int nz) 
+int read_data(float *A0, unsigned int nx,unsigned int ny,unsigned int nz) 
 { 
   int s=0;
-  int i,j,k;
+  unsigned int i,j,k;
   for(i=0;i<nz;i++)
   {
     for(j=0;j<ny;j++)
