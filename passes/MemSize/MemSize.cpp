@@ -92,7 +92,8 @@ namespace {
       Function::arg_iterator z =  F->getArgumentList().end();  
       Value* trace_arg;  //trace parameter in kernel
 
-      //Check correct kernel
+      loop_map.clear();            //Forget about loops in other kernel functions
+
       inst_iterator I,E;  
       //locate the kernel argument where we will write our trace
       for(; a!=z; a++){

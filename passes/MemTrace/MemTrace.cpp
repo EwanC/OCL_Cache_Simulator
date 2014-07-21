@@ -93,7 +93,10 @@ namespace {
     Value* trace_arg;            //'trace' argument storing mem address and instruction name
     Value* t_id_arg;             //'ids'   argument storing the string global id
     Value* loop_arg;             //'loop'  argument storing loops and their iterations
- 
+  
+
+    loop_map.clear();            //Forget about loops in other kernel functions
+
     inst_iterator I,E;  
     Function::arg_iterator a =  F->getArgumentList().begin(); 
     Function::arg_iterator z =  F->getArgumentList().end();  
