@@ -1,1 +1,0 @@
-/usr/bin/g++  -fPIC -Wall -O0   -shared -Wl,-soname,libbench_support.so -o libbench_support.so CMakeFiles/bench_support.dir/src/bench_support.cpp.o 

@@ -1,1 +1,0 @@
-/usr/bin/g++   -Wall -std=c++0x -O0    CMakeFiles/cacheSim.dir/stats.cpp.o CMakeFiles/cacheSim.dir/parse.cpp.o CMakeFiles/cacheSim.dir/cache.cpp.o CMakeFiles/cacheSim.dir/main.cpp.o  -o cacheSim -rdynamic 

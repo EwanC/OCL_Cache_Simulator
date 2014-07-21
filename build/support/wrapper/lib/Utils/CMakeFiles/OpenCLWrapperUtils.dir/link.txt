@@ -1,1 +1,0 @@
-/usr/bin/g++  -fPIC -Wall -O0   -shared -Wl,-soname,libOpenCLWrapperUtils.so -o libOpenCLWrapperUtils.so CMakeFiles/OpenCLWrapperUtils.dir/src/Utils.cpp.o 
