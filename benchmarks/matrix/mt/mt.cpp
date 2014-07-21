@@ -47,10 +47,8 @@ void enqueWriteCommands(Queue& queue);
 void enqueReadCommands(Queue& queue);
 float random(float rand_min, float rand_max);
 void freeMemory();
-void printVector(const float* vector, unsigned int size); 
-void printMatrix(const float* matrix, size_t width, size_t height);
-void setSizes();
 void verifyResults();
+void setSizes();
 
 //-----------------------------------------------------------------------------
 // Runtime components.
@@ -112,10 +110,9 @@ int main(int argc, char** argv) {
   
   setSizes();
   setKernelArguments();
-  //long executionTime = 0l;
 
   for (unsigned int repetition = 0; repetition < REPETITIONS; ++repetition) {
-    if(localWorkSize[0] == -1 || localWorkSize[1] == -1)
+    if(localWorkSize[0] < 0 || localWorkSize[1] < 0)
       localWorkSize = NULL;
 
 
@@ -211,7 +208,6 @@ void hostMemoryAlloc() {
   for(unsigned int row = 0; row < globalWorkSize[1]; row++) {
     for(unsigned int column = 0; column < globalWorkSize[0]; column++) {
       hostA[column + globalWorkSize[0] * row] = random(-ELEMENT_LIMIT, ELEMENT_LIMIT);
-//      hostA[column + WIDTH * row] = counter;
       counter++;
     }
   }
@@ -253,7 +249,7 @@ void setKernelArgumentsWithLocal() {
   kernel->setArgument(1, *A);
   kernel->setArgument(2, sizeof(cl_int), (void*) width);
   kernel->setArgument(3, sizeof(cl_int), (void*) height);
-  std::cout << "workgroup size: "<<localWorkSize[0] << " " << localWorkSize[1] << "\n";
+//  std::cout << "workgroup size: "<<localWorkSize[0] << " " << localWorkSize[1] << "\n";
 
   kernel->setArgument(4, (localWorkSize[0]) * localWorkSize[1] * sizeof(float), NULL);
 }
@@ -276,33 +272,11 @@ void verifyResults() {
       }
     }
   }
-
-//  printMatrix(hostA, WIDTH, HEIGHT);
-//  std::cout << "\n";
-//  printMatrix(hostB, HEIGHT, WIDTH);
-//  std::cout << "\n";
+  std::cout<<"Ok!\n";
 }
 
 //-----------------------------------------------------------------------------
 float random(float rand_min, float rand_max) {
   float result =(float)rand()/(float)RAND_MAX;
   return ((1.0 - result) * rand_min + result *rand_max);
-}
-
-//-----------------------------------------------------------------------------
-void printVector(const float* printVector, unsigned int size) {
-  for (unsigned int index = 0; index < size; ++index) {
-    std::cout << printVector[index] << " ";
-  }
-  std::cout << std::endl;
-}
-
-//-----------------------------------------------------------------------------
-void printMatrix(const float* matrix, size_t width, size_t height) {
-  for (unsigned int row = 0; row < height; ++row) {
-    for (unsigned int column = 0; column < width; ++column) {
-      std::cout << std::setprecision(3) << matrix[row * width + column] << " ";
-    }
-    std::cout << std::endl;
-  }
 }

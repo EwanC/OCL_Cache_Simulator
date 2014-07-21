@@ -27,7 +27,7 @@ def Dependencies():
 
 
 def parseArgs():
-    parser = OptionParser(usage="Usage: %prog [options] 'OpenCL Program' 'Kernel File'",
+    parser = OptionParser(usage="Usage: %prog [options] 'OpenCL Program' 'Kernel Name'",
                         version="Visualizer 1.0")
 
     parser.add_option("-s","--simulate",

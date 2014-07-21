@@ -39,8 +39,6 @@ void enqueReadCommands(Queue& queue);
 float random(float rand_min, float rand_max);
 void run(const Context* context, Queue& queue);
 void freeMemory();
-void printVector(const float* vector, unsigned int size); 
-void printMatrix(const float* matrix);
 void setNDRangeSizes();
 void verifyResults();
 
@@ -65,12 +63,12 @@ cl_uint* width = NULL;
 size_t* localWorkSize = NULL;
 size_t* globalWorkSize = NULL;
 
-std::string kernelName = "";
+std::string kernelName = "mm";
 
 //-----------------------------------------------------------------------------
 
 int main(int argc, char** argv) {
-  initialization(argc, argv);
+  srand((unsigned)time(0));
   platform = new Platform(PLATFORM_ID);
   Context* context = platform->getContext();
   Device device = platform->getDevice(DEVICE_ID);
@@ -100,20 +98,6 @@ int main(int argc, char** argv) {
   freeMemory();
   return 0;
 }
-
-//-----------------------------------------------------------------------------
-void initialization(int argc, char** argv) {
-  srand((unsigned)time(0));
-
-  if(argc > 1)
-    kernelName = argv[1];
-  else {
-    std::cout << "Error passing the parameters: kernelName required." << 
-                 std::endl; 
-    exit(1);
-  }
-}
-
 //-----------------------------------------------------------------------------
 void setNDRangeSizes() {
   localWorkSize = new size_t[2];
@@ -198,26 +182,27 @@ void run(const Context* context, Queue& queue) {
     queue.finish();
     executionTime += runEvent.computeDuration();
   }
-  std::cout <<"execution time:" << executionTime << "\n";
+ // std::cout <<"execution time:" << executionTime << "\n";
 }
 
 //-----------------------------------------------------------------------------
 void verifyResults() {
   float* cpuHostC = new float [W_SIZE * H_SIZE];
-  int errors = 0;
+ 
   for(unsigned int row = 0; row < H_SIZE; ++row) {
     for(unsigned int column = 0; column < W_SIZE; ++column) {
       float result = 0.0f;
       for(unsigned int index = 0; index < W_SIZE; ++index) 
         result += hostA[row * W_SIZE + index] * hostB[index * W_SIZE + column];
       if(abs(hostC[row * W_SIZE + column] - result) >= 0.001f){
-        errors++;
-        std::cout << "Error "<<errors <<" " <<hostC[row * W_SIZE + column] <<" "<<result <<"\n";
-        
+        std::cout << "Error in computation " <<hostC[row * W_SIZE + column] <<" "<<result <<"\n";
+        exit(1);          
       }
       cpuHostC[row * W_SIZE + column] = result;
     }
   }
+   std::cout <<"Ok!\n";
+
   delete [] cpuHostC;
 }
 
@@ -225,22 +210,4 @@ void verifyResults() {
 float random(float rand_min, float rand_max) {
   float result =(float)rand()/(float)RAND_MAX;
   return ((1.0 - result) * rand_min + result *rand_max);
-}
-
-//-----------------------------------------------------------------------------
-void printVector(const float* printVector, unsigned int size) {
-  for (unsigned int index = 0; index < size; ++index) {
-    std::cout << printVector[index] << " ";
-  }
-  std::cout << std::endl;
-}
-
-//-----------------------------------------------------------------------------
-void printMatrix(const float* matrix) {
-  for (unsigned int row = 0; row < H_SIZE; ++row) {
-    for (unsigned int column = 0; column < W_SIZE; ++column) {
-      std::cout << matrix[row * W_SIZE + column] << " ";
-    }
-    std::cout << std::endl;
-  }
 }

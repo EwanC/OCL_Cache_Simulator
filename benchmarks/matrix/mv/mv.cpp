@@ -29,10 +29,10 @@ namespace po = boost::program_options;
 #define REPETITIONS 1
 #define ELEMENT_LIMIT 10
 
-#define HEIGHT 32 // 5  //128 *128
-#define WIDTH 16  // 5 //128 * 8
+#define HEIGHT 1024 // 5  //128 *128
+#define WIDTH 256  // 5 //128 * 8
+#define BLOCK_SIZE 16
 
-//#define SIZE 1024
 #define UNCOALESCED0 "MatVecMulUncoalesced0"
 #define UNCOALESCED1 "MatVecMulUncoalesced1"
 #define COALESCED0 "MatVecMulCoalesced0"
@@ -51,7 +51,6 @@ void enqueReadCommands(Queue& queue);
 void verifyResults();
 float random(float rand_min, float rand_max);
 void freeMemory(); 
-void printVector(const float* vector, unsigned int size); 
 void setSizes();
 
 //-----------------------------------------------------------------------------
@@ -109,9 +108,8 @@ int main(int argc, char** argv) {
   setSizes();
 
   setKernelArguments();
-  long executionTime = 0l;
 
-  if(localWorkSize[0] == -1)
+  if(localWorkSize[0] < 0)
     localWorkSize = NULL;
 
   queue.run(*kernel, 1, 0, globalWorkSize, localWorkSize);
@@ -136,17 +134,17 @@ void initialization(int argc, char** argv) {
   po::notify(vm);
 
   kernelName = vm["kernelName"].as<std::string>();
-  blockSize = 16;
+  blockSize = BLOCK_SIZE;
   getPlatformDevice(&PLATFORM_ID, &DEVICE_ID);
 }
 
 //-----------------------------------------------------------------------------
 void setSizes() {
-//  localWorkSize = new size_t[1];
-//  globalWorkSize = new size_t[1];
-//
-//  localWorkSize[0] = blockSize;
-//  globalWorkSize[0] = HEIGHT;
+    localWorkSize = new size_t[1];
+    globalWorkSize = new size_t[1];
+
+    localWorkSize[0] = blockSize;
+    globalWorkSize[0] = HEIGHT;
 }
 
 //-----------------------------------------------------------------------------
@@ -252,7 +250,7 @@ void verifyResults() {
       cpuHostW[row] = result;
     }
   }
-//  printVector(hostW, SIZE);
+  std::cout<<"Ok!\n";
 
   delete [] cpuHostW;
 }
@@ -261,12 +259,4 @@ void verifyResults() {
 float random(float rand_min, float rand_max) {
   float result =(float)rand()/(float)RAND_MAX;
   return ((1.0 - result) * rand_min + result *rand_max);
-}
-
-//-----------------------------------------------------------------------------
-void printVector(const float* printVector, unsigned int size) {
-  for (unsigned int index = 0; index < size; ++index) {
-    std::cout << printVector[index] << " ";
-  }
-  std::cout << std::endl;
 }
