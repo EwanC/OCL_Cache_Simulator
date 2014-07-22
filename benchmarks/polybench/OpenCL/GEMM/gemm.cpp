@@ -177,7 +177,7 @@ void cl_clean_up()
 void gemm(DATA_TYPE *A, DATA_TYPE *B, DATA_TYPE *C, DATA_TYPE* result) {
   unsigned int i, j, k;
 
-  int intReps = 2;
+  int intReps = 1;
 
   for (i = 0; i < 128; i++) {
     for (j = 0; j < 128; j++) {

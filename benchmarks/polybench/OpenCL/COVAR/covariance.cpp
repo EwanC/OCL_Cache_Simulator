@@ -106,8 +106,9 @@ void compareResults(DATA_TYPE* symmat, DATA_TYPE* symmat_outputFromGpu)
 			}			
 		}
 	}
-	printf("Non-Matching CPU-GPU Outputs Beyond Error Threshold of %4.2f Percent: %d\n", PERCENT_DIFF_ERROR_THRESHOLD, fail);
 
+        assert(fail == 0 && "CPU - GPU Computation does not match!");
+        std::cout << "Ok!\n";
 }
 
 
@@ -172,27 +173,24 @@ void cl_launch_kernel(Queue& queue)
 	// Execute the OpenCL kernel
 	queue.run(*kernel_mean, 1,0, globalWorkSize_Kernel1, localWorkSize_Kernel1);
 	
-        //clEnqueueBarrier(clCommandQue);
-
 		
 	// Set the arguments of the kernel
-	//kernel_reduce->setArgument( 0,*mean_mem_obj);
-	//kernel_reduce->setArgument( 1,*data_mem_obj);
-	//kernel_reduce->setArgument( 2, sizeof(int), (void *)&m);
-	//kernel_reduce->setArgument( 3, sizeof(int), (void *)&n);
+	kernel_reduce->setArgument( 0,*mean_mem_obj);
+	kernel_reduce->setArgument( 1,*data_mem_obj);
+	kernel_reduce->setArgument( 2, sizeof(int), (void *)&m);
+	kernel_reduce->setArgument( 3, sizeof(int), (void *)&n);
 
-	//// Execute the OpenCL kernel
-	//queue.run(*kernel_reduce, 2, 0, globalWorkSize_Kernel2, localWorkSize_Kernel2);
-	////clEnqueueBarrier(clCommandQue);
-	//
-	//// Set the arguments of the kernel
-	//kernel_covar->setArgument( 0,*symmat_mem_obj);
-	//kernel_covar->setArgument( 1,*data_mem_obj);
-	//kernel_covar->setArgument( 2, sizeof(int), (void *)&m);
-	//kernel_covar->setArgument( 3, sizeof(int), (void *)&n);
+	// Execute the OpenCL kernel
+	queue.run(*kernel_reduce, 2, 0, globalWorkSize_Kernel2, localWorkSize_Kernel2);
+	
+	// Set the arguments of the kernel
+	kernel_covar->setArgument( 0,*symmat_mem_obj);
+	kernel_covar->setArgument( 1,*data_mem_obj);
+	kernel_covar->setArgument( 2, sizeof(int), (void *)&m);
+	kernel_covar->setArgument( 3, sizeof(int), (void *)&n);
 
-	//// Execute the OpenCL kernel
-	//queue.run(*kernel_covar, 1, 0, globalWorkSize_Kernel3, localWorkSize_Kernel3);
+	// Execute the OpenCL kernel
+	queue.run(*kernel_covar, 1, 0, globalWorkSize_Kernel3, localWorkSize_Kernel3);
         queue.finish();
 }
 
@@ -257,8 +255,6 @@ int main(void)
 	DATA_TYPE* mean;
 	DATA_TYPE* symmat_outputFromGpu;	
 
-	DATA_TYPE* mean_deb;
-	DATA_TYPE* data_deb;
 
 	data = (DATA_TYPE*)malloc((M + 1)*(N + 1)*sizeof(DATA_TYPE));
 	symmat = (DATA_TYPE*)malloc((M + 1)*(M + 1)*sizeof(DATA_TYPE));
@@ -280,13 +276,15 @@ int main(void)
            std::cout <<program.getBuildLog(device); 
          }
          kernel_mean=program.createKernel(meanKernelName.c_str());
-         cl_launch_kernel(queue);
+         kernel_reduce=program.createKernel(reduceKernelName.c_str());
+         kernel_covar=program.createKernel(covarKernelName.c_str());
 
+         cl_launch_kernel(queue);
 
 	queue.readBuffer(*symmat_mem_obj, (M+1) * (N+1) * sizeof(DATA_TYPE), symmat_outputFromGpu);
         queue.finish();
-//	covariance(data, symmat, mean);
-//	compareResults(symmat, symmat_outputFromGpu);
+	covariance(data, symmat, mean);
+	compareResults(symmat, symmat_outputFromGpu);
 	cl_clean_up();
 	
 	free(data);

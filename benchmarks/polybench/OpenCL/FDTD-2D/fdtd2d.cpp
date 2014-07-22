@@ -36,9 +36,10 @@
 #include "Utils.h"
 
 //define the error threshold for the results "not matching"
+#define ERROR_THRESHOLD 0.05
 
 /* Problem size */
-#define TMAX 5//500
+#define TMAX 3//500
 #define NX 256 //2048
 #define NY 256 //2048
 
@@ -90,21 +91,17 @@ void compareResults(DATA_TYPE* hz1, DATA_TYPE* hz2)
 	{
 		for (j=0; j < NY; j++) 
 		{
-			if (percentDiff(hz1[i*NY + j], hz2[i*NY + j]) > PERCENT_DIFF_ERROR_THRESHOLD) 
+			if (percentDiff(hz1[i*NY + j], hz2[i*NY + j]) > ERROR_THRESHOLD) 
 			{
 				fail++;
 			}
+
 		}
 	}
 	
-	// Print results
-	printf("Non-Matching CPU-GPU Outputs Beyond Error Threshold of %4.2f Percent: %d\n", PERCENT_DIFF_ERROR_THRESHOLD, fail);
-
+        assert(fail == 0 && "CPU - GPU Computation does not match!");
+        std::cout << "Ok!\n";  
 }
-
-
-
-
 
 void init_arrays(DATA_TYPE* _fict_, DATA_TYPE* ex, DATA_TYPE* ey, DATA_TYPE* hz)
 {
@@ -167,28 +164,25 @@ void cl_launch_kernel(Queue& queue)
 		// Execute the OpenCL kernel
 		queue.run(*kernel1, 2, 0, globalWorkSize, localWorkSize);
 		
-                //clEnqueueBarrier(clCommandQue);
+		// Set the arguments of the kernel
+		kernel2->setArgument( 0,*ex_mem_obj);
+		kernel2->setArgument( 1,*ey_mem_obj);
+		kernel2->setArgument( 2,*hz_mem_obj);
+		kernel2->setArgument( 3, sizeof(int), (void *)&nx);
+		kernel2->setArgument( 4, sizeof(int), (void *)&ny);
+		
+		// Execute the OpenCL kernel
+		queue.run(*kernel2, 2,0, globalWorkSize, localWorkSize);
 
 		// Set the arguments of the kernel
-		//kernel2->setArgument( 0,*ex_mem_obj);
-		//kernel2->setArgument( 1,*ey_mem_obj);
-		//kernel2->setArgument( 2,*hz_mem_obj);
-		//kernel2->setArgument( 3, sizeof(int), (void *)&nx);
-		//kernel2->setArgument( 4, sizeof(int), (void *)&ny);
-		//
-		//// Execute the OpenCL kernel
-		//queue.run(*kernel2, 2,0, globalWorkSize, localWorkSize);
-		////clEnqueueBarrier(clCommandQue);
-
-		//// Set the arguments of the kernel
-		//kernel3->setArgument( 0,*ex_mem_obj);
-		//kernel3->setArgument( 1,*ey_mem_obj);
-		//kernel3->setArgument( 2,*hz_mem_obj);
-		//kernel3->setArgument( 3, sizeof(int), (void *)&nx);
-		//kernel3->setArgument( 4, sizeof(int), (void *)&ny);
-		//
-		//// Execute the OpenCL kernel
-		//queue.run(*kernel3, 2, 0, globalWorkSize, localWorkSize);
+		kernel3->setArgument( 0,*ex_mem_obj);
+		kernel3->setArgument( 1,*ey_mem_obj);
+		kernel3->setArgument( 2,*hz_mem_obj);
+		kernel3->setArgument( 3, sizeof(int), (void *)&nx);
+		kernel3->setArgument( 4, sizeof(int), (void *)&ny);
+		
+		// Execute the OpenCL kernel
+		queue.run(*kernel3, 2, 0, globalWorkSize, localWorkSize);
 		queue.finish();
 	}
 }
@@ -276,13 +270,16 @@ int main(void)
            std::cout <<program.getBuildLog(device); 
          }
          kernel1=program.createKernel(kernel1Name.c_str());
+         kernel2=program.createKernel(kernel2Name.c_str());
+         kernel3=program.createKernel(kernel3Name.c_str());
+
          cl_launch_kernel(queue);
 
 	queue.readBuffer(*hz_mem_obj, NX * NY * sizeof(DATA_TYPE), hz_outputFromGpu);
         queue.finish();
 
-	//runFdtd(_fict_, ex, ey, hz);
-	//compareResults(hz, hz_outputFromGpu);
+	runFdtd(_fict_, ex, ey, hz);
+	compareResults(hz, hz_outputFromGpu);
 	cl_clean_up();
 	
 	free(_fict_);

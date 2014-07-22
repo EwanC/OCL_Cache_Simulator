@@ -75,14 +75,14 @@ Context* context;
 Buffer* a_mem_obj;
 Buffer* c_mem_obj;
 
-int N = N_DEFAULT;
-int M = M_DEFAULT;
+unsigned int N = N_DEFAULT;
+unsigned int M = M_DEFAULT;
 
 std::string kernelName = "syrk_kernel";
 
 void init_arrays(DATA_TYPE* A, DATA_TYPE* C)
 {
-	 int i, j;
+	unsigned  int i, j;
 	
 	for (i = 0; i < N; i++)
     	{
@@ -153,7 +153,7 @@ void cl_clean_up()
 void syrk(DATA_TYPE *A, DATA_TYPE *C, DATA_TYPE *result) {
   unsigned int i, j, k;
 
-  int intReps = 2;
+  int intReps = 1;
 
   for (i = 0; i < 128; i++) {
     for (j = 0; j < 128; j++) {
@@ -164,7 +164,6 @@ void syrk(DATA_TYPE *A, DATA_TYPE *C, DATA_TYPE *result) {
         }
       }
 
-      std::cout << C[i * N + j] << " " << result[i * N + j] << "\n";
 
       assert(fabs(C[i * N + j] - result[i * N + j])  <
                  0.001 &&

@@ -133,26 +133,16 @@ void cl_launch_kernel(Queue& queue) {
   // Execute the OpenCL kernel
   queue.run(*kernel1, 1,0, globalWorkSize,localWorkSize);
 
-  //  // Set the arguments of the kernel
-  //  errcode = clSetKernelArg(clKernel2, 0, sizeof(cl_mem), (void
-  // *)&a_mem_obj);
-  //  errcode |= clSetKernelArg(clKernel2, 1, sizeof(cl_mem), (void
-  // *)&x2_mem_obj);
-  //  errcode |= clSetKernelArg(clKernel2, 2, sizeof(cl_mem), (void
-  // *)&y2_mem_obj);
-  //  errcode |= clSetKernelArg(clKernel2, 3, sizeof(int), (void *)&n);
-  //  if (errcode != CL_SUCCESS)
-  //    printf("Error in seting arguments\n");
-  //
-  //  // Execute the OpenCL kernel
-  //  errcode =
-  //      clEnqueueNDRangeKernel(clCommandQue, clKernel2, 1, NULL,
-  // globalWorkSize,
-  //                             localWorkSize, 0, NULL, NULL);
-  //  if (errcode != CL_SUCCESS)
-  //    printf("Error in launching kernel\n");
+  // Set the arguments of the kernel
+ kernel2->setArgument( 0,*a_mem_obj);
+ kernel2->setArgument( 1,*x2_mem_obj);
+ kernel2->setArgument( 2,*y2_mem_obj);
+ kernel2->setArgument( 3, sizeof(int), (void *)&n);
+  
+ // Execute the OpenCL kernel
+ queue.run(*kernel2, 1, 0,globalWorkSize,localWorkSize);
 
-  queue.finish();
+ queue.finish();
 }
 
 void cl_clean_up() {
@@ -168,10 +158,10 @@ void cl_clean_up() {
 }
 
 void runMvt(DATA_TYPE *a, DATA_TYPE *x1, DATA_TYPE *x2, DATA_TYPE *y1,
-            DATA_TYPE *y2, DATA_TYPE *result) {
+            DATA_TYPE *y2, DATA_TYPE *x1_result,DATA_TYPE *x2_result) {
   unsigned int i, j, k, l;
 
-  int intReps = 2;
+  int intReps = 1;
 
   for (i = 0; i < N; i++) {
     for (int rep = 0; rep < intReps; ++rep) {
@@ -180,8 +170,17 @@ void runMvt(DATA_TYPE *a, DATA_TYPE *x1, DATA_TYPE *x2, DATA_TYPE *y1,
       }
     }
 
-    //std::cout << x1[i] << " " << result[i] << "\n";
-    assert(fabs(x1[i] - result[i]) < 0.01 && "Error!");
+    std::cout << x1[i] << " " << result[i] << "\n";
+    assert(fabs(x1[i] - x1_result[i]) < 0.01 && "Error!");
+  }
+
+  for(k=0;k<N;k++){
+    for(l=0;l<N;l++){
+       x2[k] = x2[k] + a[k*N +l] * y2[l];
+   
+    }
+    std::cout<<x2[k]<<std::endl;
+    assert(fabs(x2[k] - x2_result[k]) < 0.01 && "Error!");
   }
 
   std::cout << "Ok!\n";
@@ -226,13 +225,15 @@ int main(void) {
            std::cout <<program.getBuildLog(device); 
   }
   kernel1=program.createKernel(kernel1Name.c_str());
+  kernel2=program.createKernel(kernel2Name.c_str());
   cl_launch_kernel(queue);
 
 
   queue.readBuffer(*x1_mem_obj,N * sizeof(DATA_TYPE), x1_outputFromGpu);
+  queue.readBuffer(*x2_mem_obj,N * sizeof(DATA_TYPE), x2_outputFromGpu);
   queue.finish();
 
-  runMvt(a, x1, x2, y_1, y_2, x1_outputFromGpu);
+  runMvt(a, x1, x2, y_1, y_2, x1_outputFromGpu,x2_outputFromGpu);
   cl_clean_up();
 
   free(a);

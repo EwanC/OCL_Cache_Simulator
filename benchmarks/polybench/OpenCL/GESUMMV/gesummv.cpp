@@ -95,7 +95,7 @@ void gesummv(DATA_TYPE *A, DATA_TYPE *B, DATA_TYPE *x, DATA_TYPE *y,
              DATA_TYPE *tmp, DATA_TYPE *result) {
   unsigned int i, j;
 
-  int intReps = 2;
+  int intReps = 1;
   
   for (i = 0; i < N; i++) {
     tmp[i] = 0;
@@ -108,7 +108,6 @@ void gesummv(DATA_TYPE *A, DATA_TYPE *B, DATA_TYPE *x, DATA_TYPE *y,
 
       y[i] = ALPHA * tmp[i] + BETA * y[i];
     }
-
     assert(fabs(y[i] - result[i]) / y[i] < 0.001 && "Error!");
   }
 

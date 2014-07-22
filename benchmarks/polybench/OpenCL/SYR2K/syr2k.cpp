@@ -119,8 +119,6 @@ void cl_launch_kernel(Queue& queue)
 	int m = M;
 	int n = N;
 
-	DATA_TYPE alpha = ALPHA;
-	DATA_TYPE beta = BETA;
 
   size_t oldLocalWorkSize[2], globalWorkSize[2];
   oldLocalWorkSize[0] = DIM_LOCAL_WORK_GROUP_X;
@@ -160,7 +158,7 @@ void cl_clean_up()
 }
 
 void syr2k(DATA_TYPE *A, DATA_TYPE *B, DATA_TYPE *C, DATA_TYPE *result) {
-  int i, j, k;
+  unsigned int i, j, k;
 
   for (i = 0; i < N; i++) {
     for (j = 0; j < N; j++) {
@@ -168,7 +166,7 @@ void syr2k(DATA_TYPE *A, DATA_TYPE *B, DATA_TYPE *C, DATA_TYPE *result) {
     }
   }
 
-  int intReps = 2;
+  int intReps = 1;
   
 
   for (i = 0; i < 128; i++) {
