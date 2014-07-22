@@ -17,6 +17,7 @@ namespace {
 
  };
 
+  
 
 
   struct MemSize : public ModulePass {
@@ -30,6 +31,8 @@ namespace {
    //Function call hooks
    Function *thread_id_hook;
    Function *atomicINC_hook;
+
+   std::vector<Instruction*>toDelete;
 
    Type* int32_Ty;    //32 bit int type
    Type* int64_Ty;    //64 bit int type
@@ -47,6 +50,12 @@ namespace {
       for( A = M.begin(),E = M.end(); A!= E; ++A){
         loop_ctr=0;
         MemSize::runOnFunction(A); 
+      }
+
+
+      while(!toDelete.empty()){
+        toDelete.back()->eraseFromParent();
+        toDelete.pop_back();
       }
 
       return false;  
@@ -88,12 +97,13 @@ namespace {
     //Executes on every kernel in kernel file
     virtual bool runOnFunction(Module::iterator &F) {  
 
+
+      loop_map.clear();
       Function::arg_iterator a =  F->getArgumentList().begin(); 
       Function::arg_iterator z =  F->getArgumentList().end();  
       Value* trace_arg;  //trace parameter in kernel
 
-      loop_map.clear();            //Forget about loops in other kernel functions
-
+      //Check correct kernel
       inst_iterator I,E;  
       //locate the kernel argument where we will write our trace
       for(; a!=z; a++){
@@ -127,6 +137,9 @@ namespace {
             GEP = builder.CreateBitCast(GEP,PointerType::get(int32_Ty,1));
             //atomically load and increment the trace index
             builder.CreateCall(atomicINC_hook,GEP,"a_inc");
+
+            if(isa<StoreInst>(i))
+              toDelete.push_back(i);
 
           }
         }
