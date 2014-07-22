@@ -244,7 +244,7 @@ void cl_clean_up()
 void mm3_cpu(DATA_TYPE *A, DATA_TYPE *B, DATA_TYPE *C, DATA_TYPE *D, DATA_TYPE *E, DATA_TYPE *F, DATA_TYPE *G)
 {
 	int i,j,k;
-	int intReps = 2;
+	int intReps = 1;
 	/* E := A*B */
 	for (i = 0; i < NI; i++)
 	{

@@ -29,19 +29,19 @@ __kernel void bicgKernel1(__global DATA_TYPE *A, __global DATA_TYPE *p,
   }
 }
 
-//__kernel void bicgKernel2(__global DATA_TYPE *A, __global DATA_TYPE *r, __global DATA_TYPE *s, int nx, int ny) 
-//{
-//	int j = get_global_id(0);
-//	
-//	if (j < ny)
-//	{
-//		s[j] = 0.0;
-//
-//		int i;
-//		for(i = 0; i < nx; i++)
-//		{
-//			s[j] += A[i * ny + j] * r[i];
-//		}
-//	}
-//	
-//}
+__kernel void bicgKernel2(__global DATA_TYPE *A, __global DATA_TYPE *r, __global DATA_TYPE *s, int nx, int ny) 
+{
+	int j = get_global_id(0);
+	
+	if (j < ny)
+	{
+		s[j] = 0.0;
+
+		int i;
+		for(i = 0; i < nx; i++)
+		{
+			s[j] += A[i * ny + j] * r[i];
+		}
+	}
+	
+}

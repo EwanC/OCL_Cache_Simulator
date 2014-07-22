@@ -39,8 +39,8 @@
 #define MAX_SOURCE_SIZE (0x100000)
 
 /* Problem size */
-#define M 256 //2048
-#define N 256 //2048
+#define M 128 //2048
+#define N 128 //2048
 
 /* Thread block dimensions for kernel 1*/
 #define DIM_LOCAL_WORK_GROUP_KERNEL_1_X 256
@@ -105,16 +105,12 @@ void compareResults(DATA_TYPE *symmat, DATA_TYPE *symmat_outputFromGpu) {
                       symmat_outputFromGpu[i * (N + 1) + j]) >
           PERCENT_DIFF_ERROR_THRESHOLD) {
         fail++;
-        printf("I: %d J: %d \n 1: %f\n 2: %f\n", i, j, symmat[i * (N + 1) + j],
-               symmat_outputFromGpu[i * (N + 1) + j]);
       }
     }
   }
+  assert(fail == 0 && "CPU - GPU Computation does not match!");
 
-  // print results
-  printf("Non-Matching CPU-GPU Outputs Beyond Error Threshold of %4.2f "
-         "Percent: %d\n",
-         PERCENT_DIFF_ERROR_THRESHOLD, fail);
+  std::cout << "Ok!\n";
 }
 
 void init_arrays(DATA_TYPE *data) {
@@ -129,6 +125,8 @@ void init_arrays(DATA_TYPE *data) {
 
 void cl_mem_init(DATA_TYPE *data, DATA_TYPE *mean, DATA_TYPE *stddev,
                  DATA_TYPE *symmat,Queue& queue) {
+
+
   data_mem_obj = new Buffer(*(platform->getContext()),Buffer::ReadWrite,sizeof(DATA_TYPE) * (M + 1) * (N + 1), NULL);
   
   symmat_mem_obj = new Buffer(*(platform->getContext()),Buffer::ReadWrite,sizeof(DATA_TYPE) * (M + 1) * (N + 1), NULL);
@@ -145,6 +143,7 @@ void cl_mem_init(DATA_TYPE *data, DATA_TYPE *mean, DATA_TYPE *stddev,
   queue.writeBuffer(*stddev_mem_obj, sizeof(DATA_TYPE) * (M + 1), stddev);
   
   queue.writeBuffer(*mean_mem_obj,sizeof(DATA_TYPE) * (M + 1), mean);
+ 
   queue.finish();
 }
 
@@ -199,50 +198,43 @@ void cl_launch_kernel(Queue& queue) {
   kernel_mean->setArgument( 4, sizeof(int), (void *)&n);
 
   // Execute the OpenCL kernel
-  queue.run(*kernel_mean, 1, 0, globalWorkSize_Kernel1,localWorkSize_Kernel1);
   
-  //clEnqueueBarrier(clCommandQue);
+  queue.run(*kernel_mean, 1, 0, globalWorkSize_Kernel1,localWorkSize_Kernel1);
+  // Set the arguments of the kernel
+  kernel_std->setArgument( 0,*mean_mem_obj);
+  kernel_std->setArgument( 1,*stddev_mem_obj);
+  kernel_std->setArgument( 2,*data_mem_obj);
+  kernel_std->setArgument( 3, sizeof(DATA_TYPE), (void *)&float_n);
+  kernel_std->setArgument( 4, sizeof(DATA_TYPE), (void *)&eps);
+  kernel_std->setArgument( 5, sizeof(int), (void *)&m);
+  kernel_std->setArgument( 6, sizeof(int), (void *)&n);
+
+  // Execute the OpenCL kernel
+  queue.run(*kernel_std, 1, 0,globalWorkSize_Kernel2, localWorkSize_Kernel2);
+  
 
   // Set the arguments of the kernel
-  //kernel_std->setArgument( 0,*mean_mem_obj);
-  //kernel_std->setArgument( 1,*stddev_mem_obj);
-  //kernel_std->setArgument( 2,*data_mem_obj);
-  //kernel_std->setArgument( 3, sizeof(DATA_TYPE), (void *)&float_n);
-  //kernel_std->setArgument( 4, sizeof(DATA_TYPE), (void *)&eps);
-  //kernel_std->setArgument( 5, sizeof(int), (void *)&m);
-  //kernel_std->setArgument( 6, sizeof(int), (void *)&n);
+  kernel_reduce->setArgument( 0,*mean_mem_obj);
+  kernel_reduce->setArgument( 1,*stddev_mem_obj);
+  kernel_reduce->setArgument( 2,*data_mem_obj);
+  kernel_reduce->setArgument( 3, sizeof(DATA_TYPE), (void *)&float_n);
+  kernel_reduce->setArgument( 4, sizeof(int), (void *)&m);
+  kernel_reduce->setArgument( 5, sizeof(int), (void *)&n);
 
-  //// Execute the OpenCL kernel
-  //queue.run(*kernel_std, 1, 0,globalWorkSize_Kernel2, localWorkSize_Kernel2, 0, NULL, NULL);
-  //
-  ////clEnqueueBarrier(clCommandQue);
-
-  //// Set the arguments of the kernel
-  //kernel_reduce->setArgument( 0,*mean_mem_obj);
-  //kernel_reduce->setArgument( 1,*stddev_mem_obj);
-  //kernel_reduce->setArgument( 2,*data_mem_obj);
-  //kernel_reduce->setArgument( 3, sizeof(DATA_TYPE), (void *)&float_n);
-  //kernel_reduce->setArgument( 4, sizeof(int), (void *)&m);
-  //kernel_reduce->setArgument( 5, sizeof(int), (void *)&n);
-
-  //// Execute the OpenCL kernel
-  //queue.run(kernel_reduce, 2,0,globalWorkSize_Kernel3,localWorkSize_Kernel3);
-  //
-  ////clEnqueueBarrier(clCommandQue);
-
-  //// Set the arguments of the kernel
-  //kernel_corr->setArgument( 0,*symmat_mem_obj);
-  //kernel_corr->setArgument( 1,*data_mem_obj);
-  //kernel_corr->setArgument( 2, sizeof(int), (void *)&m);
-  //kernel_corr->setArgument( 3, sizeof(int), (void *)&n);
-
-  //// Execute the OpenCL kernel
-  //queue.run(kernel_corr, 1, 0,globalWorkSize_Kernel4,localWorkSize_Kernel4);
+  // Execute the OpenCL kernel
+  queue.run(*kernel_reduce, 2,0,globalWorkSize_Kernel3,localWorkSize_Kernel3);
   
-  //clEnqueueBarrier(clCommandQue);
 
- // DATA_TYPE val = 1.0;
-  //queue.writeBuffer(*symmat_mem_obj,true,((M) * (M + 1) + (M)) * sizeof(DATA_TYPE), sizeof(DATA_TYPE), &val,NULL,NULL);
+  // Set the arguments of the kernel
+  kernel_corr->setArgument( 0,*symmat_mem_obj);
+  kernel_corr->setArgument( 1,*data_mem_obj);
+  kernel_corr->setArgument( 2, sizeof(int), (void *)&m);
+  kernel_corr->setArgument( 3, sizeof(int), (void *)&n);
+
+  // Execute the OpenCL kernel
+  queue.run(*kernel_corr, 1, 0,globalWorkSize_Kernel4,localWorkSize_Kernel4);
+  DATA_TYPE val = 1.0;
+  queue.writeBuffer(*symmat_mem_obj,((M) * (M + 1) + (M)) * sizeof(DATA_TYPE), sizeof(DATA_TYPE), (void*)&val);
   queue.finish();
 }
 
@@ -292,10 +284,10 @@ void correlation(DATA_TYPE *data, DATA_TYPE *mean, DATA_TYPE *stddev,
   // Center and reduce the column vectors.
   for (i = 1; i <= N; i++) {
     for (j = 1; j <= M; j++) {
-      data[i * (M + 1) + j] -= mean[j];
-      data[i * (M + 1) + j] /= sqrt(FLOAT_N);
-      data[i * (M + 1) + j] /= stddev[j];
-    }
+        data[i * (M + 1) + j] -= mean[j];
+        data[i * (M + 1) + j] /= sqrt(FLOAT_N);
+        data[i * (M + 1) + j] /= stddev[j];
+   }
   }
 
   // Calculate the m * m correlation matrix.
@@ -348,13 +340,15 @@ int main(void) {
   }
 
   kernel_mean=program.createKernel(meanKernelName.c_str());
+  kernel_std=program.createKernel(stdKernelName.c_str());
+  kernel_corr=program.createKernel(corrKernelName.c_str());
+  kernel_reduce=program.createKernel(reduceKernelName.c_str());
   cl_launch_kernel(queue);
-
   queue.readBuffer(*symmat_mem_obj,(M + 1) * (N + 1) * sizeof(DATA_TYPE),symmat_outputFromGpu);
   queue.finish();
 
-  //correlation(data, mean, stddev, symmat);
-  //compareResults(symmat, symmat_outputFromGpu);
+  correlation(data, mean, stddev, symmat);
+  compareResults(symmat, symmat_outputFromGpu);
   cl_clean_up();
 
   free(data);

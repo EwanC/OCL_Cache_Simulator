@@ -73,27 +73,10 @@ Kernel* kernel2;
 
 Buffer* a_mem_obj;
 Buffer* x_mem_obj;
-Buffer* y_mem_obj;
 Buffer* tmp_mem_obj;
 
 std::string kernel1Name="atax_kernel1";
 std::string kernel2Name="atax_kernel2";
-
-void compareResults(DATA_TYPE *z, DATA_TYPE *z_outputFromGpu) {
-  int i, fail;
-  fail = 0;
-
-  for (i = 0; i < NY_DEFAULT; i++) {
-    if (percentDiff(z[i], z_outputFromGpu[i]) > PERCENT_DIFF_ERROR_THRESHOLD) {
-      fail++;
-    }
-  }
-
-  // print results
-  printf("Non-Matching CPU-GPU Outputs Beyond Error Threshold of %4.2f "
-         "Percent: %d\n",
-         PERCENT_DIFF_ERROR_THRESHOLD, fail);
-}
 
 
 void init_array(DATA_TYPE *x, DATA_TYPE *A) {
@@ -108,20 +91,18 @@ void init_array(DATA_TYPE *x, DATA_TYPE *A) {
   }
 }
 
-void cl_mem_init(DATA_TYPE *A, DATA_TYPE *x, DATA_TYPE *y, DATA_TYPE *tmp,Queue& queue) {
+void cl_mem_init(DATA_TYPE *A, DATA_TYPE *x, DATA_TYPE *tmp,Queue& queue) {
   
   a_mem_obj = new Buffer(*(platform->getContext()), Buffer::ReadWrite,sizeof(DATA_TYPE) * NX * NY_DEFAULT, NULL);
   
   x_mem_obj = new Buffer(*(platform->getContext()), Buffer::ReadWrite,sizeof(DATA_TYPE) * NY_DEFAULT, NULL);
   
-  y_mem_obj = new Buffer(*(platform->getContext()), Buffer::ReadWrite,sizeof(DATA_TYPE) * NY_DEFAULT, NULL);
   
   tmp_mem_obj  = new Buffer(*(platform->getContext()), Buffer::ReadWrite,sizeof(DATA_TYPE) * NX, NULL);
 
 
   queue.writeBuffer(*a_mem_obj,sizeof(DATA_TYPE) * NX * NY_DEFAULT, A);
   queue.writeBuffer(*x_mem_obj,sizeof(DATA_TYPE) * NY_DEFAULT, x);
-  queue.writeBuffer(*y_mem_obj,sizeof(DATA_TYPE) * NY_DEFAULT, y);
   queue.writeBuffer(* tmp_mem_obj,sizeof(DATA_TYPE) * NX, tmp);
   queue.finish();
 }
@@ -150,28 +131,7 @@ void cl_launch_kernel(Queue& queue) {
   
   // Execute the OpenCL kernel
   queue.run(*kernel1, 1,0, globalWorkSize,localWorkSize);
-
-//  clEnqueueBarrier(clCommandQue);
-//
-//  globalWorkSize[0] =
-//      (size_t)ceil(((float)NY_DEFAULT) / ((float)DIM_LOCAL_WORK_GROUP_X)) *
-//      DIM_LOCAL_WORK_GROUP_X;
-//  globalWorkSize[1] = 1;
-
-//  // Set the arguments of the kernel
-//  errcode = clSetKernelArg(clKernel2, 0, sizeof(cl_mem), (void *)&a_mem_obj);
-//  errcode |= clSetKernelArg(clKernel2, 1, sizeof(cl_mem), (void *)&y_mem_obj);
-//  errcode |= clSetKernelArg(clKernel2, 2, sizeof(cl_mem), (void *)&tmp_mem_obj);
-//  errcode |= clSetKernelArg(clKernel2, 3, sizeof(int), (void *)&nx);
-//  errcode |= clSetKernelArg(clKernel2, 4, sizeof(int), (void *)&ny);
-//  if (errcode != CL_SUCCESS)
-//    printf("Error in seting arguments\n");
-//  errcode =
-//      clEnqueueNDRangeKernel(clCommandQue, clKernel2, 1, NULL, globalWorkSize,
-//                             localWorkSize, 0, NULL, NULL);
-//  if (errcode != CL_SUCCESS)
-//    printf("Error in launching kernel\n");
-   queue.finish();
+  queue.finish();
 }
 
 void cl_clean_up() {
@@ -182,29 +142,25 @@ void cl_clean_up() {
  
   delete a_mem_obj;
   delete x_mem_obj;
-  delete y_mem_obj;
   delete tmp_mem_obj;
   
 }
 
-void atax_cpu(DATA_TYPE *A, DATA_TYPE *x, DATA_TYPE *y, DATA_TYPE *tmp,
-              DATA_TYPE *result) {
+void atax_cpu(DATA_TYPE *A, DATA_TYPE *x,DATA_TYPE *result) {
 
-  char *reps = getEnvString("OCL_REPETITIONS");
+  
   int intReps = 1;
-  if (reps != NULL) {
-    intReps = atoi(reps);
-  }
+  
 
   for (int row = 0; row < 32; row++) {
-      tmp[row] = 0;
+    DATA_TYPE tmp  = 0;
     for (int rep = 0; rep < intReps; ++rep) {
       for (int column = 0; column < NY_DEFAULT; column++) {
-        tmp[row] += A[row * NY_DEFAULT + column] * x[column];
+        tmp += A[row * NY_DEFAULT + column] * x[column];
       }
     }
 
-    assert(fabs(tmp[row] - result[row]) < 1 && "Error!");
+    assert(fabs(tmp - result[row]) < 1 && "Error!");
   }
 
   std::cout << "Ok!\n";
@@ -214,8 +170,6 @@ int main(void) {
 
   DATA_TYPE *A;
   DATA_TYPE *x;
-  DATA_TYPE *y;
-  //DATA_TYPE *y_outputFromGpu;
   DATA_TYPE *tmp;
 
   /////////////////////////
@@ -237,7 +191,7 @@ int main(void) {
   Queue queue(*context,device,Queue::EnableProfiling); 
   
 
-  cl_mem_init(A, x, y, tmp,queue);
+  cl_mem_init(A, x, tmp ,queue);
 
   Program program(context,KERNEL_DIRECTORY KERNEL_FILE_NAME);
   if(!program.build(device)){
@@ -251,7 +205,7 @@ int main(void) {
   queue.readBuffer(*tmp_mem_obj,NX_DEFAULT * sizeof(DATA_TYPE), tmp);
   queue.finish();
 
-  atax_cpu(A, x, y, tmp, tmp);
+  atax_cpu(A, x, tmp);
   cl_clean_up();
 
   free(A);

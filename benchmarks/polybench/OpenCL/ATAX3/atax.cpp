@@ -74,28 +74,13 @@ Kernel* kernel1;
 Kernel* kernel2;
 
 Buffer* a_mem_obj;
-Buffer* x_mem_obj;
 Buffer* y_mem_obj;
 Buffer* tmp_mem_obj;
 
 std::string kernel1Name="atax_kernel1";
 std::string kernel2Name="atax_kernel2";
 
-void compareResults(DATA_TYPE *z, DATA_TYPE *z_outputFromGpu) {
-  unsigned int i, fail;
-  fail = 0;
 
-  for (i = 0; i < NY; i++) {
-    if (percentDiff(z[i], z_outputFromGpu[i]) > PERCENT_DIFF_ERROR_THRESHOLD) {
-      fail++;
-    }
-  }
-
-  // print results
-  printf("Non-Matching CPU-GPU Outputs Beyond Error Threshold of %4.2f "
-         "Percent: %d\n",
-         PERCENT_DIFF_ERROR_THRESHOLD, fail);
-}
 
 void init_array(DATA_TYPE *tmp, DATA_TYPE *A) {
 
@@ -109,7 +94,7 @@ void init_array(DATA_TYPE *tmp, DATA_TYPE *A) {
   }
 }
 
-void cl_mem_init(DATA_TYPE *A, DATA_TYPE *x, DATA_TYPE *y, DATA_TYPE *tmp,Queue& queue) {
+void cl_mem_init(DATA_TYPE *A, DATA_TYPE *y, DATA_TYPE *tmp,Queue& queue) {
   
   a_mem_obj = new Buffer(*(platform->getContext()), Buffer::ReadWrite,sizeof(DATA_TYPE) * NX_DEFAULT * NY, NULL);
   
@@ -155,24 +140,22 @@ void cl_clean_up() {
   delete platform;
 
   delete a_mem_obj;
-  delete x_mem_obj;
   delete y_mem_obj;
   delete tmp_mem_obj;
 }
 
-void atax_cpu(DATA_TYPE *A, DATA_TYPE *tmp, DATA_TYPE *y,
-              DATA_TYPE *result) {
+void atax_cpu(DATA_TYPE *A, DATA_TYPE *tmp,DATA_TYPE *result) {
 
-  int intReps = 2;
+  int intReps = 1;
 
   for (int column = 0; column < 256; column++) {
-    y[column] = 0;
+    DATA_TYPE y = 0;
     for (int rep = 0; rep < intReps; ++rep) {
       for (int row = 0; row < NX_DEFAULT; row++) {
-        y[column] += A[row * NY + column] * tmp[row];
+        y += A[row * NY + column] * tmp[row];
       }
     }
-    assert(fabs(y[column] - result[column]) < 1 && "Error!");
+    assert(fabs(y - result[column]) < 1 && "Error!");
   }
 
   std::cout << "Ok!\n";
@@ -182,7 +165,6 @@ int main(void) {
 
   DATA_TYPE *A;
   DATA_TYPE *y;
-  DATA_TYPE *y_gpu;
   DATA_TYPE *tmp;
 
   /////////////////////////
@@ -194,7 +176,6 @@ int main(void) {
 
   A = (DATA_TYPE *)malloc(NX_DEFAULT * NY * sizeof(DATA_TYPE));
   y = (DATA_TYPE *)malloc(NY * sizeof(DATA_TYPE));
-  y_gpu = (DATA_TYPE *)malloc(NY * sizeof(DATA_TYPE));
   tmp = (DATA_TYPE *)malloc(NX_DEFAULT * sizeof(DATA_TYPE));
 
   init_array(tmp, A);
@@ -204,7 +185,7 @@ int main(void) {
   Device device = platform->getDevice(DEVICE_ID);
   Queue queue(*context,device,Queue::EnableProfiling); 
   
-  cl_mem_init(A, NULL, y, tmp,queue);
+  cl_mem_init(A, y, tmp,queue);
 
   Program program(context,KERNEL_DIRECTORY KERNEL_FILE_NAME);
   if(!program.build(device)){
@@ -216,15 +197,14 @@ int main(void) {
   cl_launch_kernel(queue);
 
 
-  queue.readBuffer(*y_mem_obj,NY * sizeof(DATA_TYPE), y_gpu);
+  queue.readBuffer(*y_mem_obj,NY * sizeof(DATA_TYPE), y);
   queue.finish();
 
-  atax_cpu(A, tmp, y, y_gpu);
+  atax_cpu(A, tmp, y);
   cl_clean_up();
 
   free(A);
   free(y);
-  free(y_gpu);
   free(tmp);
 
   return 0;
