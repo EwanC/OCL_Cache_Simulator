@@ -3,7 +3,6 @@
 #include <stdio.h>
 #include <CL/cl.h>
 
-
 #define TRACE1_SIZE  5 //number of 'long long' entries in the added buffer for
                        //the first transformation
 
@@ -60,6 +59,7 @@ private:
   FILE* fp;                              // Output file to dump trace
   cl_kernel kernel;                      // Kernel from second transformation
   cl_kernel length_kernel;               // Kernel from first transformation
+
 };
 
 // Traits.

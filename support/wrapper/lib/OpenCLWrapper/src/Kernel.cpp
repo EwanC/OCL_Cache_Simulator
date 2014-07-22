@@ -203,11 +203,11 @@ void Kernel::write_trace(const size_t* local,unsigned int dim) const {
      has executed
   */
   if(first_run){
-    fprintf(fp,"local size:%d",*local);
+    fprintf(fp,"local size:%lu",*local);
     
     if(dim > 1){
        local++;
-       fprintf(fp," %d",*local);
+       fprintf(fp," %lu",*local);
     }
     else{
        fprintf(fp," 0");
@@ -215,7 +215,7 @@ void Kernel::write_trace(const size_t* local,unsigned int dim) const {
 
     if(dim > 2){
       local++;
-      fprintf(fp," %d\n",*local);
+      fprintf(fp," %lu\n",*local);
     }
     else{
       fprintf(fp," 0\n");

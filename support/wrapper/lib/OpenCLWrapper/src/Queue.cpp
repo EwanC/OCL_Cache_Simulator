@@ -74,6 +74,14 @@ void Queue::writeBuffer(const Buffer& buffer, size_t size, void* pointer,
   writeBuffer(queue, buffer.getId(), 1, 0, size, pointer, 0, NULL, 
               event.getId());
 }
+
+void Queue::writeBuffer(const Buffer& buffer, size_t offset,size_t size, void* pointer){
+
+  cl_int errorCode = clEnqueueWriteBuffer(queue, buffer.getId(), true,
+                       offset, size, pointer, 0, NULL, NULL);
+  verifyOutputCode(errorCode, "Error writing the buffer");
+
+}
 void Queue::writeBuffer(const Buffer& buffer,
                         bool blocking,
                         size_t offset,
@@ -117,6 +125,7 @@ void Queue::run( Kernel& kernel,
   /*
      Run kernel from first instrumentation
   */ 
+
   run(queue, kernel.getLenId(), dimensionsNumber,
       globalOffset, globalSize, localSize, 0, NULL, NULL);
 

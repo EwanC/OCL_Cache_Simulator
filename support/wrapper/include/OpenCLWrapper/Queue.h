@@ -44,6 +44,7 @@ public:
   void writeBuffer(const Buffer& buffer, size_t size, void* pointer);
   void writeBuffer(const Buffer& buffer, size_t size, void* pointer, 
                    Event& event);
+  void writeBuffer(const Buffer& buffer, size_t offset,size_t size, void* pointer);
   void writeBuffer(const Buffer& buffer, 
                    bool blocking, 
                    size_t offset, 
@@ -80,6 +81,7 @@ public:
 
   void finish();
   void flush();
+
 
 // Private Fields.
 //------------------------------------------------------------------------------
