@@ -84,13 +84,14 @@ void init_arrays(DATA_TYPE *a, DATA_TYPE *x1, DATA_TYPE *x2, DATA_TYPE *y_1,
   unsigned int i, j;
 
   for (i = 0; i < N; i++) {
-    x1[i] = 0.0;
-    x2[i] = 0.0;
-    y_1[i] = 0.0;
-    y_2[i] = 0.0;
+
+    x1[i] = random<DATA_TYPE>();
+    x2[i] = random<DATA_TYPE>();
+    y_1[i] = random<DATA_TYPE>();
+    y_2[i] = random<DATA_TYPE>();
 
     for (j = 0; j < N; j++) {
-      a[i * N + j] = random<DATA_TYPE>();
+      a[i * N + j] = (DATA_TYPE)(i+j+1.0)/N;//random<DATA_TYPE>();
     }
   }
 }
@@ -133,11 +134,13 @@ void cl_launch_kernel(Queue& queue) {
   // Execute the OpenCL kernel
   queue.run(*kernel1, 1,0, globalWorkSize,localWorkSize);
 
+  getNewSizes(NULL, oldLocalWorkSize, NULL, localWorkSize, "mvt_kernel2", 1);
+  
   // Set the arguments of the kernel
- kernel2->setArgument( 0,*a_mem_obj);
- kernel2->setArgument( 1,*x2_mem_obj);
- kernel2->setArgument( 2,*y2_mem_obj);
- kernel2->setArgument( 3, sizeof(int), (void *)&n);
+  kernel2->setArgument( 0,*a_mem_obj);
+  kernel2->setArgument( 1,*x2_mem_obj);
+  kernel2->setArgument( 2,*y2_mem_obj);
+  kernel2->setArgument( 3, sizeof(int), (void *)&n);
   
  // Execute the OpenCL kernel
  queue.run(*kernel2, 1, 0,globalWorkSize,localWorkSize);
@@ -170,17 +173,19 @@ void runMvt(DATA_TYPE *a, DATA_TYPE *x1, DATA_TYPE *x2, DATA_TYPE *y1,
       }
     }
 
-    std::cout << x1[i] << " " << result[i] << "\n";
+   // std::cout << x1[i] << " " << x1_result[i] << "\n";
     assert(fabs(x1[i] - x1_result[i]) < 0.01 && "Error!");
   }
 
   for(k=0;k<N;k++){
-    for(l=0;l<N;l++){
-       x2[k] = x2[k] + a[k*N +l] * y2[l];
+    for(int rep = 0; rep < intReps; ++ rep){
+      for(l=0;l<N;l++){
+        x2[k] = x2[k] + a[k*N +l] * y2[l];
    
+      }
     }
-    std::cout<<x2[k]<<std::endl;
-    assert(fabs(x2[k] - x2_result[k]) < 0.01 && "Error!");
+     // std::cout<<x2[k] << " "<< x2_result[k]<<std::endl;
+     assert(fabs(x2[k] - x2_result[k]) < 0.01 && "Error!");
   }
 
   std::cout << "Ok!\n";
