@@ -62,7 +62,7 @@ void assignPriorities(std::list<Trace_entry>& list){
   unsigned int NumThreads = trace->getTotalThreads();
 
   // Give each thread a priority 
-  for(int i=0; i< NumThreads; ++i){
+  for(unsigned int i=0; i< NumThreads; ++i){
     prioirties.push_back(rand() % ((NumThreads / 4 )+1));
   }
 
@@ -91,7 +91,7 @@ void assignPriorities(std::list<Trace_entry>& list){
 */
 void sort(std::list<Trace_entry>& list){
 
-    switch(list.begin()->getPointer()->getAlgorithm()){
+    switch(Trace::algorithm){
      case Trace::RR :
         list.sort(rr_compare); 
         break;
@@ -116,7 +116,7 @@ void sort(std::list<Trace_entry>& list){
   according the the scheduling algorithm.
 
 */
-void schedule(Trace& trace){
+void schedule(Trace* trace){
  
  /*
    Count the number of memory barriers in the trace.
@@ -124,10 +124,13 @@ void schedule(Trace& trace){
    need to count those seen by one thread.
  
  */
+
+
  unsigned int barrier_count = 1;
- for( std::list<Trace_entry>::const_iterator iter = trace.entries.begin(), \
-        end = trace.entries.end();iter!=end;++iter)
-  {
+ for( std::list<Trace_entry>::const_iterator iter = trace->entries.begin(), \
+        end = trace->entries.end();iter!=end;++iter)
+  {  
+
       if(iter->getThreadId(0) == 0 && \
         iter->getThreadId(1) == 0 &&\
         iter->getThreadId(2) == 0)
@@ -140,20 +143,20 @@ void schedule(Trace& trace){
   
  
  if(barrier_count == 1){            // No barriers
-    sort(trace.entries);
+    sort(trace->entries);
  } else {                           //Barriers are present
 
    // Pariton list into a linked list for entries between barriers
    std::list<Trace_entry>* split = new std::list<Trace_entry>[barrier_count];
    
    // Record the number of barriers seen by each thread.
-   std::vector<int>barriers_seen(trace.getTotalThreads(),0);
+   std::vector<int>barriers_seen(trace->getTotalThreads(),0);
 
    //Assign each entry to a partition.
-   for( std::list<Trace_entry>::const_iterator iter = trace.entries.begin(), \
-        end = trace.entries.end();iter!=end;++iter)
+   for( std::list<Trace_entry>::const_iterator iter = trace->entries.begin(), \
+        end = trace->entries.end();iter!=end;++iter)
     {
-        unsigned int tVal = iter->getThreadVal(trace);
+        unsigned int tVal = iter->getThreadVal(*trace);
         unsigned int index = barriers_seen[tVal];
  
         if(iter->getBarrier()){
@@ -165,15 +168,15 @@ void schedule(Trace& trace){
      }
 
     // Sort each of the patitions
-    for(int i=0;i<barrier_count;i++){
+    for(unsigned int i=0;i<barrier_count;i++){
         split[i].sort(rr_compare);
         sort(split[i]);
     }
     
     //combine partitions togeth
-    trace.entries.clear();
-    for(int i=0;i<barrier_count;i++){
-      trace.entries.splice(trace.entries.end(),split[i]);
+    trace->entries.clear();
+    for(unsigned int i=0;i<barrier_count;i++){
+      trace->entries.splice(trace->entries.end(),split[i]);
     }
 
    delete[] split;

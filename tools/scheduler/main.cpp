@@ -2,12 +2,12 @@
    Ewan Crawford, ewan.cr@gmail.com
    July 2014
 */
-
 #include <fstream>
 #include "trace.h"
 #include "parse.h"
 #include "schedule.h"
 #include "warp.h"
+
 /*
 
  Uses a command line argument to set the scheduling algorithm. 
@@ -17,28 +17,32 @@
  to 32 threads.
 
 */
-void assignAlgorithm (Trace& trace, char* argv[], int argc) {
+
+unsigned int argWarpSize;
+
+
+void assignAlgorithm ( char* argv[], int argc) {
 
   if(!strcmp(argv[2],"rr")){             // Round Robin scheduling
-     trace.setAlgorithm(Trace::RR);
+     Trace::algorithm = Trace::RR;
   }
   else if(!strcmp(argv[2],"seq")){       // Sequential Scheduling
-     trace.setAlgorithm(Trace::SEQUENTIAL);
+    Trace::algorithm = Trace::SEQUENTIAL;
   }
   else if(!strcmp(argv[2],"rand")){      // Random scheduling
-     trace.setAlgorithm(Trace::RANDOM);
+     Trace::algorithm = Trace::RANDOM;
   }
   else if(!strcmp(argv[2],"coalesced")){ // Coalesced scheduling
 
     if(argc < 4){
-      trace.setWarpSize(32);
+      argWarpSize = 32;
     } else{
-      trace.setWarpSize(atoi(argv[3]));
+      argWarpSize = atoi(argv[3]);
     }
-    trace.setAlgorithm(Trace::COALESCED);
+    Trace::algorithm = Trace::COALESCED;
   }
   else if(!strcmp(argv[2],"none")){       // No scheduling
-    trace.setAlgorithm(Trace::NONE);    
+    Trace::algorithm = Trace::NONE;    
   }
 }
 
@@ -73,13 +77,13 @@ void validateArguments(int argc, char *argv[]){
    Prints reordered trace to files for graphing and cache simulation.
 
 */
-void writeOutput(const Trace& trace){
+void writeOutput(const Trace* trace){
 
   // File used for plotting memory accesses using R.
-  std::ofstream graph("graph.out",std::ofstream::out);
+  std::ofstream graph("graph.out",std::ofstream::out | std::ofstream::app);
 
   // File used for simulating cache performance. 
-  std::ofstream cache("cache.out",std::ofstream::out);
+  std::ofstream cache("cache.out",std::ofstream::out | std::ofstream::app);
 
   
   if(!graph.is_open() || !cache.is_open()  ){
@@ -92,10 +96,10 @@ void writeOutput(const Trace& trace){
     total number of workgroups. This is provided as the first line
     of the input file.
   */
-  cache <<trace.getWarpSize() << " "<<trace.getTotalWorkgroups()<<std::endl;
+  cache <<trace->getWarpSize() << " "<<trace->getTotalWorkgroups()<<std::endl;
 
-  for( std::list<Trace_entry>::const_iterator iter = trace.entries.begin(), \
-       end = trace.entries.end();iter!=end;++iter)
+  for( std::list<Trace_entry>::const_iterator iter = trace->entries.begin(), \
+       end = trace->entries.end();iter!=end;++iter)
   {
  
 
@@ -113,6 +117,8 @@ void writeOutput(const Trace& trace){
                  << getWarpId(*iter) << " " \
                  << iter->getName() << std::endl;            }
   }
+
+  cache << "------------------------"<<std::endl;
 
   graph.close();
   cache.close();
@@ -149,7 +155,7 @@ void setIndices(Trace& trace){
  If a the dimension does not exist in the thread space it's value is zero.
  This is used to record the number of dimensions in the trace.
 */
-void setThreadDim(Trace& trace, std::ifstream& input){
+void setThreadDim(Trace* trace, std::ifstream& input){
 
   char localSize[maxLineSize] ;
   input.getline(localSize,maxLineSize);
@@ -165,40 +171,61 @@ void setThreadDim(Trace& trace, std::ifstream& input){
     else {local_dim[i] = 1;}
   }
 
-  trace.setDim(dim_count);
-  trace.setLocalSize(local_dim[0],local_dim[1],local_dim[2]);
+  trace->setDim(dim_count);
+  trace->setLocalSize(local_dim[0],local_dim[1],local_dim[2]);
 
   /* 
     Checks that the number of threads in a warp is less than the number of 
     threads in a workgroup, since warps cannot span workgroups.
   */
   unsigned int workgroupSize = local_dim[0] * local_dim[1]* local_dim[2];
-  if(workgroupSize < trace.getWarpSize()){
-      trace.setWarpSize(workgroupSize);
+  if(workgroupSize < argWarpSize){
+      trace->setWarpSize(workgroupSize);
+  }
+  else {
+      trace->setWarpSize(argWarpSize);
   }
 
 }
 
-void parse(std::ifstream& input, Trace& trace){
+void parse(std::ifstream& input, std::vector<Trace*>& executions){
   /*
     Reads and parses the input file line by line, 
     where a line is a trace entry.
   */
   std::string line;
+
+  Trace* curr = new Trace(); 
+  
+  // Sets the workgroup size based on first line of input file
+  setThreadDim(curr,input);
+
   while(getline(input,line)){
-     parseInput(line,trace);
-  }
 
-  if(trace.getGlobal(1) == 0) 
-    trace.setGlobalSize(1,1); 
-  
-  if(trace.getGlobal(2) == 0) 
-    trace.setGlobalSize(2,1);
-  
-  // Give each access an index in the order of it's thread's accesses
-  setIndices(trace);
+    bool end =  parseInput(line,*curr);
+    if(end && !input.eof()){
 
- 
+      if(curr->getGlobal(1) == 0) 
+        curr->setGlobalSize(1,1); 
+  
+      if(curr->getGlobal(2) == 0) 
+        curr->setGlobalSize(2,1);
+
+
+      // Give each access an index in the order of it's thread's accesses
+      setIndices(*curr);
+
+      executions.push_back(curr);
+
+
+      curr = new Trace();
+
+      // Sets the workgroup size based on first line of input file
+      setThreadDim(curr,input);
+
+
+    }
+  } 
 
 }
 
@@ -213,23 +240,20 @@ int main(int argc, char *argv[]){
   	exit(0);
   }
 
-  // Creates Trace object specified in 'trace.h' to hold all the data
-  Trace trace;
-
-  // Sets the workgroup size based on first line of input file
-  setThreadDim(trace,input_file);
-
   // Reads the scheduling algorithm to use.
-  assignAlgorithm(trace,argv,argc);
+  assignAlgorithm(argv,argc);
 
-  parse(input_file,trace);
+  std::vector<Trace*> executions;
+
+  parse(input_file,executions);
 
   // Schedule trace according to specified algorithm.
-  if(trace.getAlgorithm() != Trace::NONE)
-    schedule(trace);
+  if(Trace::algorithm != Trace::NONE){
+    for_each(executions.begin(),executions.end(),schedule);
+  }
   
   // Prints reordered trace to output file.
-  writeOutput(trace);
+  for_each(executions.begin(),executions.end(),writeOutput);
 
   return 0;
 }

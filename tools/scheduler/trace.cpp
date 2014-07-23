@@ -1,6 +1,7 @@
 #include "trace.h"
 
 
+Trace::Algorithm Trace::algorithm = Trace::NONE;
 
 void Trace_entry::pushLoopIter(unsigned int label, unsigned int counter){
   loops.counters.push_back(std::tuple<unsigned int,unsigned int>(label,counter));

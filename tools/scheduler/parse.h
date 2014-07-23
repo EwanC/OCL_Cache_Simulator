@@ -2,7 +2,7 @@
 #define PARSE_H
 
 // Converts a file line into a Trace_entry object.
-void parseInput(std::string line,Trace& trace);
+bool parseInput(std::string line,Trace& trace);
 
 // Populate loop data in the Trace)entry object.
 void getLoops(std::string line,Trace_entry& curr);

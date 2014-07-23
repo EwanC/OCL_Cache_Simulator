@@ -100,7 +100,8 @@ class Trace{
      RANDOM,
      NONE
    };
-   
+   static Trace::Algorithm algorithm; //Scheduling algoritm
+
    Trace();
    friend std::ostream & operator<< (std::ostream & os, const Trace& right);
 
@@ -115,9 +116,6 @@ class Trace{
 
    void setWarpSize(unsigned int val){warp_size = val;}
    unsigned int getWarpSize()const{return warp_size;}
-
-   Trace::Algorithm getAlgorithm()const{return algorithm;}
-   void setAlgorithm(Trace::Algorithm a){ algorithm = a;}
 
    unsigned int getTotalWorkgroups()const;
    unsigned int getTotalThreads()const;
@@ -135,7 +133,6 @@ class Trace{
   std::vector<unsigned int> global_threads; 
   //number of threads in each dimension in a workgroup
   std::vector<unsigned int> local_threads;
-  Trace::Algorithm algorithm; //Scheduling algoritm
   //returns the ceiling of first param over second param 
   unsigned int ceiling(unsigned int, unsigned int)const;
 

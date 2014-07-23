@@ -21,7 +21,7 @@ loopTuple minGreaterThan(std::vector<loopTuple> vec,int minLabel){
   
     unsigned int minVal =0;
 
-    unsigned int lowestL= std::numeric_limits<unsigned int>::max();
+    int lowestL= std::numeric_limits<unsigned int>::max();
 
     for ( auto loop : vec ){
          if(std::get<0>(loop) < lowestL && std::get<0>(loop) > minLabel){
@@ -46,7 +46,7 @@ bool earlierLoop(const Loop_timestamp& a, const Loop_timestamp& b){
     loopTuple minA = loopTuple(-1,0);
     loopTuple minB = loopTuple(-1,0);
 
-    for(int i =0; i< minDepth; i++){
+    for(unsigned int i =0; i< minDepth; i++){
     
      
       //find not processes outermost loop
@@ -151,6 +151,7 @@ unsigned int getWarpId(const Trace_entry& a){
 
 bool warp_compare( const Trace_entry& a, const Trace_entry& b){
   
+
   // entry A is executed in a loop before entry B
   if (earlierLoop(a.getLoops(),b.getLoops()) ){
        return true;

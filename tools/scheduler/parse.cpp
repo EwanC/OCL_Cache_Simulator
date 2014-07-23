@@ -10,11 +10,11 @@
    -------------- ---------- -----------   ----------  ---------
     8 characters    1 char    7 char        16 chars    16 chars
 */
-void parseInput(std::string line,Trace& trace){
+bool parseInput(std::string line,Trace& trace){
 
   // Consecutive hypens indicate end of the trace.
   if(line.find("-") < line.length()){
-   	return;
+   	return true;
   }
 
   // Creates Trace_entry object to represent to current file line
@@ -42,6 +42,8 @@ void parseInput(std::string line,Trace& trace){
 
   // Add entry to linked list field of Trace object.
   trace.entries.push_back(curr_entry);
+
+  return false;
 }
 
 
