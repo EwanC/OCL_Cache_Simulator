@@ -220,7 +220,7 @@ void run(const Context* context, Queue& queue) {
   size_t grid[3] = {(nx-2+tx-1)/tx*tx,ny-2,nz-2};
   // size_t offset[3] = {1,1,1};
 
-  printf("global size %d %d %d\n",grid[0],grid[1],grid[2] );
+  printf("global size %lu %lu %lu\n",grid[0],grid[1],grid[2] );
 
   int t;
   for(t=0;t<iteration;t++)

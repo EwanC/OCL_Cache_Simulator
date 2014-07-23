@@ -63,6 +63,8 @@ std::string DeviceInfoTraits<std::string>::getDeviceInfo(
   char* rawResult = new char[resultSize];
   cl_int errorCode = clGetDeviceInfo(deviceId, deviceInfoName,
                                      resultSize, rawResult, NULL);
+    verifyOutputCode(errorCode, "Error querying device name ");
+
   std::string result(rawResult, resultSize);
   delete [] rawResult;
   return result;

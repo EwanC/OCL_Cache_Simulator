@@ -129,6 +129,8 @@ cl_platform_id Platform::queryPlatformIdFromName(
                          const std::string& platformName) const {
   std::vector<cl_platform_id> platformsId;
   queryPlatformsId(platformsNumber, platformsId);
+  return platformsId[platformsNumber]; 
+
 }
 
 void Platform::queryPlatformsId(
