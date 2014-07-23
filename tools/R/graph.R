@@ -51,4 +51,4 @@ plot(
 #add label to y axis
 axis(2,mem_addr,label=mem_addr)
 
-dev.off()
+garbage<-dev.off()
