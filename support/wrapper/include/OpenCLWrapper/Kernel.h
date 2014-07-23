@@ -6,6 +6,8 @@
 #define TRACE1_SIZE  5 //number of 'long long' entries in the added buffer for
                        //the first transformation
 
+#define FILE_NAME "trace.txt"
+
 class Buffer;
 class Device;
 class Program;
@@ -35,7 +37,6 @@ public:
 public:
   cl_kernel getId() const;
   cl_kernel getLenId() const;
-  bool first_run;
 
   void setArgument(cl_uint index, size_t size, const void* pointer);
   void setArgument(cl_uint index, const Buffer& buffer);
@@ -56,9 +57,9 @@ public:
 // Private Fields.
 //------------------------------------------------------------------------------
 private:
-  FILE* fp;                              // Output file to dump trace
-  cl_kernel kernel;                      // Kernel from second transformation
-  cl_kernel length_kernel;               // Kernel from first transformation
+
+  cl_kernel kernel;                             // Kernel from second transformation
+  cl_kernel length_kernel;                      // Kernel from first transformation
 
 };
 

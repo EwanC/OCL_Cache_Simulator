@@ -163,7 +163,6 @@ void Queue::run( Kernel& kernel,
   */ 
 
   kernel.write_trace(localSize,dimensionsNumber);
-  kernel.first_run = 0;
 
 
 }
@@ -218,7 +217,6 @@ void Queue::run(Kernel& kernel,
   */ 
  
   kernel.write_trace(localSize,dimensionsNumber);
-  kernel.first_run = 0;
 
 }
 
@@ -279,7 +277,6 @@ void Queue::run(Kernel& kernel,
   */ 
  
   kernel.write_trace(localSize,dimensionsNumber);
-  kernel.first_run = 0;
 
 }
 

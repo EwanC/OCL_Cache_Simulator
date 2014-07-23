@@ -16,7 +16,6 @@ void verifySetArgumentCode(int errorCode, unsigned int index);
 //------------------------------------------------------------------------------
 Kernel::Kernel(const Program& program, const char* name) {
   cl_int errorCode;
-  first_run = true; 
 
   /*
     Create host memory for added buffer in prelimary transformation.
@@ -46,8 +45,7 @@ Kernel::Kernel(const Program& program, const char* name) {
       File name is the instrumented kernel name with suffix ".out"
   */
   
-  fp=fopen(std::string(name).append(".out").c_str(), "w+");
-  if (fp == NULL) perror ("Error opening file");
+ 
 
   /* 
      Create extra buffer for first instrumented kernel 
@@ -67,7 +65,6 @@ Kernel::Kernel(const Program& program, const char* name) {
 
 //------------------------------------------------------------------------------
 Kernel::~Kernel() throw() {
-  fclose(fp);
   clReleaseMemObject(trace1_buffer);
   clReleaseMemObject(id_buffer);
   clReleaseMemObject(loop_buffer);
@@ -75,10 +72,8 @@ Kernel::~Kernel() throw() {
   clReleaseKernel(kernel);
   clReleaseKernel(length_kernel);
 
-  free(h_addr);
   free(h_trace1);
-  free(h_id);
-  free(h_loop);
+ 
 }
 
 //------------------------------------------------------------------------------
@@ -202,25 +197,30 @@ void Kernel::write_trace(const size_t* local,unsigned int dim) const {
      Print to file local size metadata in each dimensions if this is the first time the kernel
      has executed
   */
-  if(first_run){
-    fprintf(fp,"local size:%lu",*local);
+  FILE* fp = fopen(FILE_NAME,"a");
+  if(fp == NULL){
+    printf("Error Opening output file\n");
+    exit(1);
+  }
     
-    if(dim > 1){
+
+  fprintf(fp,"local size:%lu",*local);
+  if(dim > 1){
        local++;
        fprintf(fp," %lu",*local);
-    }
-    else{
+  }
+  else{
        fprintf(fp," 0");
-    }
+  }
 
-    if(dim > 2){
+  if(dim > 2){
       local++;
       fprintf(fp," %lu\n",*local);
-    }
-    else{
-      fprintf(fp," 0\n");
-    }
   }
+  else{
+      fprintf(fp," 0\n");
+  }
+  
 
   /*
       Write each trace entry to file in as the entry in each buffer separated by
@@ -231,10 +231,16 @@ void Kernel::write_trace(const size_t* local,unsigned int dim) const {
      fprintf(fp,"%llX|%llX|%llX\n",h_addr[i], h_id[i],h_loop[i]);
   }
 
+  free(h_addr);
+  free(h_id);
+  free(h_loop);
+  h_trace1[0] = 1;
+
   /* 
      Signals end of file and is used as a barrier between iterations of the same kernel
   */
   fprintf(fp,"---------------\n");
+  fclose(fp);
 
  
 }
