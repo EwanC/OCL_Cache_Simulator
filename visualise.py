@@ -52,26 +52,24 @@ def parseArgs():
                          help="Scheduling algorithm")
 
     (options,args) = parser.parse_args()
-    if len(args) < 2:
+    if len(args) < 1:
        parser.error("wrong number of arguments")
     
     return (options,args)
 
 def setup_env():
    os.environ["SCRIPT_PATH"] = os.getcwd()+"/support/scripts" 
-   
-   tools = os.getenv("VIS_TOOLS")
+
+   tools  = os.getenv("VIS_TOOLS")
    if not tools:
-      print "please set environmental variable VIS_TOOLS to directory where the project tools are built"
+      print "please set environmental variable VIS_TOOLS to directory where the llvm tools are built"
       exit(0)
 
    passes = os.getenv("VIS_PASSES")
    if not passes:
       print "please set environmental variable VIS_PASSES to directory where the llvm passes are built"
       exit(0)
-   ###################################################
-   # os.environ["VIS_PASSES"] = ~/Documents/LLVM/llvm/Release+Asserts/lib
-   ###################################################
+  
    return tools
 
 
@@ -81,22 +79,21 @@ def main():
 
     program = os.path.basename(args[0])
     directory =  os.path.dirname(args[0])
-    kernel = args[1]
 
     build_dir = setup_env()
    
     if (program == "mt" or program == "mv"):
-       os.system(args[0]+" --kernelName " + kernel)
+       os.system(args[0]+" --kernelName " + args[1])
     else:
-       os.system(args[0] +" "+kernel)
+       os.system(args[0])
 
-    trace = os.getcwd() + "/" +kernel+".out"
+    trace = os.getcwd() + "/trace.txt"
     scheduler_path = build_dir+"/scheduler/scheduler "
    
     os.system(scheduler_path + trace + " " +opts.alg + " "+str(opts.warp));
     os.system("rm " + trace);
     
-    graph = os.getcwd() + "/graph.out"
+    graph = os.getcwd()+ "/graph.out"
     cache = os.getcwd() + "/cache.out"
     
     R_path = os.getcwd()+"/tools/R/graph.R "
@@ -108,7 +105,7 @@ def main():
    
     os.system("rm " + graph)
     os.system("rm " + cache)
-    os.system("mv " + graph+".png " + os.getcwd()+"/"+kernel+".png") 
+    os.system("mv " + graph+".png " + os.getcwd()+"/"+program+".png") 
 
 if __name__ == "__main__":
   main()
