@@ -17,6 +17,14 @@ void verifySetArgumentCode(int errorCode, unsigned int index);
 Kernel::Kernel(const Program& program, const char* name) {
   cl_int errorCode;
 
+  // Get rid of any exising traces
+  FILE* fp = fopen(FILE_NAME,"w"); 
+  if(fp ==NULL){
+    std::cout <<"error opening output file\n";
+    exit(1); 
+  }
+  fclose(fp);
+
   /*
     Create host memory for added buffer in prelimary transformation.
     Contains five entries, one for the length counter, initalized to zero, and 
@@ -102,12 +110,13 @@ cl_kernel Kernel::getLenId() const {
 void Kernel::alloc(const size_t *localSize,unsigned int dim){
   cl_int errorCode;
 
+
   /*
      Read length of trace
   */
 
-  unsigned long long size = h_trace1[0] + 100;
-  std::cout<<"TRACE LEN: "<<size-100<<std::endl;
+  unsigned long long size = h_trace1[0];
+  //std::cout<<"TRACE LEN: "<<size<<std::endl;
 
   /*
      Checks for and alert user of any problems with the kernel that could
@@ -226,7 +235,7 @@ void Kernel::write_trace(const size_t* local,unsigned int dim) const {
       Write each trace entry to file in as the entry in each buffer separated by
       a '|' sysbol
   */
-  for(unsigned int i=1;i<h_trace1[0]+100;i++){
+  for(unsigned int i=1;i<h_trace1[0];i++){
     if(h_addr[i] != 0)
      fprintf(fp,"%llX|%llX|%llX\n",h_addr[i], h_id[i],h_loop[i]);
   }
