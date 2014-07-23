@@ -1,6 +1,53 @@
 #include "parse.h"
 #include "cache.h"
 
+
+
+TRACE_VEC parse(std::ifstream& input){
+  TRACE_VEC exections;
+
+
+  unsigned int warp_size;
+  unsigned int total_wk;
+  std::string line;
+
+  getline(input,line);
+  sscanf (line.c_str(),"%u %u",&warp_size,&total_wk);
+  std::vector<unsigned int> workgroups = get_workgroups(warp_size,total_wk);
+  
+
+  /*
+  *  Reads memory trace from file 
+  */  
+
+  unsigned int  wk_id,warp_id,inst,op;
+  unsigned long address; 
+  std::list<Entry> trace;
+  while(getline(input,line)){
+  
+    if((line.find("-") < line.length()) && !input.eof()){
+         exections.push_back(std::make_tuple(workgroups,warp_size,trace));
+         
+         getline(input,line);
+         sscanf (line.c_str(),"%u %u",&warp_size,&total_wk);
+         workgroups = get_workgroups(warp_size,total_wk);
+         
+    }else{
+
+      sscanf (line.c_str(),"%lX %d %d %d %d\n",&address,&op,&wk_id,&warp_id,&inst);
+      Entry e(address,op,wk_id,warp_id,inst);
+
+      trace.push_back(e);
+    }
+
+  }
+
+  return exections;
+
+}
+
+
+
 /*
  *  Parses to cache write policy from cli argument
 */
@@ -67,4 +114,3 @@ void print_config(int size, int line_size, int assoc, int num_sets){
   std::cout << "ASSOCIATIVITY:     "<< assoc << std::endl;
   std::cout << "NUMBER OF SETS:    "<< num_sets << std::endl;
 }
-

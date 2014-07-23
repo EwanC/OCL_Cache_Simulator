@@ -1,6 +1,10 @@
 #ifndef COMMON_H
 #define COMMON_H
 
+#include <vector>
+
+std::vector<unsigned int>get_workgroups(unsigned int warp_size,unsigned int total_wk);
+
 
 const unsigned int CORES = 15;  //Number of cores on GTX 480 architecture simulated against
 

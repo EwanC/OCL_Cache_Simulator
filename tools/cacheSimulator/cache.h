@@ -65,11 +65,31 @@ class CacheSet
 //Class used to store a cache.
 class Cache
 { 
+  private:
+   //counter for number of accesses processed from warp
+   unsigned int warp_counter;
 
+   //Thread id of last memory access
+   int last_id;
+
+   //instruction identifier of last memory access
+   int last_inst;
 	
   public:
 
-    Cache(unsigned int num_lines, unsigned int line_size, unsigned int associativity, unsigned int rep_policy, unsigned int write_policy,unsigned int w_size);
+   /*
+   * Read a single integer from the cache.
+   */
+   void read(unsigned long address,int t_id, int inst);
+
+   /*
+    * Write a single integer to memory and/or the cache.
+   */
+    void write(unsigned long address,int t_id, int inst);
+
+    void reset_memory(){ warp_counter=0;last_id=0;last_inst=0;}
+
+    Cache(unsigned int num_lines, unsigned int line_size, unsigned int associativity, unsigned int rep_policy, unsigned int write_policy);
     
     unsigned int num_sets;             // Number of sets in the cache. 
 
@@ -100,15 +120,7 @@ class Cache
 
 
 
-/*
- * Read a single integer from the cache.
- */
-void cache_read(Cache& cache, unsigned long address,int t_id, int inst);
 
-/*
- * Write a single integer to memory and/or the cache.
- */
-void cache_write(Cache& cache, unsigned long address,int t_id, int inst);
 
 
 unsigned int ceiling(unsigned int a, unsigned int b);

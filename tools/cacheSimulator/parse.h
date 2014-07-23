@@ -4,6 +4,18 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <fstream>
+#include <vector>
+#include <list>
+#include <tuple>
+
+#include "common.h"
+
+typedef std::vector<std::tuple<std::vector<unsigned int>,unsigned int,std::list<Entry>>>  TRACE_VEC;
+
+
+TRACE_VEC parse(std::ifstream& input);
+
 
 /*
  *  Prints help on arguments needed to use the program
@@ -22,8 +34,6 @@ int parse_write_policy(char* arg);
  *  Parses to cache replacement policy from cli argument
 */
 int parse_replacement_policy(char* arg);
-
-const unsigned int maxLineSize = 50;
 
 
 #endif

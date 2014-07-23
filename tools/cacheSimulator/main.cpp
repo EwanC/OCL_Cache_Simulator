@@ -1,6 +1,3 @@
-#include <vector>
-#include <fstream>
-#include <list>
 #include <algorithm>  
 
 #include "parse.h"
@@ -8,9 +5,9 @@
 #include "cache.h"
 #include "common.h"
 
- 
+
 //calculate workgroups to process based on total number of workgroups
-static std::vector<unsigned int>get_workgroups(unsigned int warp_size,unsigned int total_wk){
+std::vector<unsigned int>get_workgroups(unsigned int warp_size,unsigned int total_wk){
 
   std::vector<unsigned int> workgroups;
 
@@ -22,7 +19,7 @@ static std::vector<unsigned int>get_workgroups(unsigned int warp_size,unsigned i
 
   // if only one workgroup per core, process first workgroup
   if(sim_num == 1){
-   std::cout << "wk group zero \n";
+  // std::cout << "wk group zero \n";
    workgroups.push_back(0);
    return workgroups;
   }
@@ -33,7 +30,7 @@ static std::vector<unsigned int>get_workgroups(unsigned int warp_size,unsigned i
       while(std::find(workgroups.begin(),workgroups.end(),added) != workgroups.end() ){
           added = rand() % total_wk;
       }
-      std::cout << "wk group " << added << std::endl;
+    //  std::cout << "wk group " << added << std::endl;
       workgroups.push_back(added);
   }
 
@@ -44,27 +41,33 @@ static std::vector<unsigned int>get_workgroups(unsigned int warp_size,unsigned i
 /*
  *  Runs trace through simulator
 */
-void exec_trace(std::list<Entry> trace,Cache& cache,std::vector<unsigned int> wk){
+void exec_trace(TRACE_VEC& executions,Cache& cache){
 
- 
+  unsigned int n=0;
+  for(TRACE_VEC::iterator iter = executions.begin(), end = executions.end(); iter != end; ++iter){
+      std::cout <<"\nExecuting Trace " << n++ << " of "<<executions.size();
+      cache.warp_size = std::get<1>(*iter);
+      cache.reset_memory();
 
-  //for each workgroup to process
-  for(unsigned int j=0;j<wk.size();j++){
-    //for every entry in workgroup
-    for( std::list<Entry>::iterator iter = trace.begin(), \
-        end = trace.end();iter!=end;++iter){          
+      std::vector<unsigned int> workgroups = std::get<0>(*iter);
+      std::list<Entry> entries = std::get<2>(*iter);
 
-       //check if entry is in current workgroup
-       if(iter->wk_id == wk.at(j)){
-         //Process with simulator
-         if(iter->op==1)
-           cache_read(cache,iter->address,iter->warp_id,iter->inst);        //Cache read
-         else
-           cache_write(cache,iter->address,iter->warp_id,iter->inst);       //Cache write
-       }
 
-     }
+      for(unsigned int w=0;w<workgroups.size();w++){
+        //for every entry in workgroup
+        for( std::list<Entry>::iterator e_iter = entries.begin(), \
+           e_end = entries.end();e_iter!=e_end;++e_iter){  
 
+            //check if entry is in current workgroup
+            if(e_iter->wk_id == workgroups.at(w)){
+              //Process with simulator
+              if(e_iter->op==1)
+                cache.read(e_iter->address,e_iter->warp_id,e_iter->inst);        //Cache read
+              else
+                cache.write(e_iter->address,e_iter->warp_id,e_iter->inst);       //Cache write
+            }
+        }
+      }
   }
 }
 
@@ -125,47 +128,24 @@ int main(int argc, char *argv[]){
   if(write_pol == -1)  
      return 0;
 
-  /*
-  *  get metadata from first line of input file
-  */
-  unsigned int warp_size;
-  unsigned int total_wk;
-  char metadata[maxLineSize] ;
-  input.getline(metadata,maxLineSize);
-  sscanf (metadata,"%u %u",&warp_size,&total_wk);
 
-
-  //populate vector of workgroups to process
-  std::vector<unsigned int> workgroups = get_workgroups(warp_size,total_wk);
 
   //Prints cache configuration information to stdout
   print_config(size,linesize,assoc, num_lines / assoc); 
 
-  Cache cache(num_lines,linesize, assoc, replacement,write_pol,warp_size);
+  Cache cache(num_lines,linesize, assoc, replacement,write_pol);
 
   
+
   /*
-  *  Reads memory trace from file 
-  */  
+  *  parses trace vector into a vector of traces from individual kernel executions
+  */
 
-  
-  std::string line;
-  unsigned int  wk_id,warp_id,inst,op;
-  unsigned long address;
-  std::list<Entry> trace;
-  while(getline(input,line)){
+  TRACE_VEC executions = parse(input);
 
-    sscanf (line.c_str(),"%lX %d %d %d %d\n",&address,&op,&wk_id,&warp_id,&inst);
-    Entry e(address,op,wk_id,warp_id,inst);
-
-    trace.push_back(e);
-  }
-
-
-  
 
   //Runs the trace through the simulator
-  exec_trace(trace, cache,workgroups);
+  exec_trace(executions, cache);
 
   //Prints cache performance data to stdout
   std::cout<<cache.stats;

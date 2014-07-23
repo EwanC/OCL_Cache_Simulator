@@ -4,15 +4,6 @@
 
 
   
-//counter for number of accesses processed from warp
-static unsigned int warp_counter = 0;
-
-//Thread id of last memory access
-static int last_id = 0;
-
-//instruction identifier of last memory access
-static int last_inst = 0;
-
 
 /*
  * Initialize a new cache line with a given line size.
@@ -65,7 +56,7 @@ static void get_shift_and_mask(int value, unsigned int *shift, unsigned int *mas
  * bytes long, with the given associativity, and the given set of cache policies for replacement
  * and write operations.
  */
-Cache::Cache(unsigned int num_lines, unsigned int lineSize, unsigned int assoc, unsigned int repPolicy, unsigned int writePolicy,unsigned int wSize)
+Cache::Cache(unsigned int num_lines, unsigned int lineSize, unsigned int assoc, unsigned int repPolicy, unsigned int writePolicy)
 {
 
     /*
@@ -83,7 +74,12 @@ Cache::Cache(unsigned int num_lines, unsigned int lineSize, unsigned int assoc, 
     line_size = lineSize;
     associativity = assoc;
     num_sets = num_lines / assoc;
-    warp_size = wSize;
+    warp_size = 32;
+
+
+    warp_counter = 0;
+    last_id = 0;
+    last_inst = 0;
 
 
     /*
@@ -219,40 +215,33 @@ static CacheLine *cache_set_add(const Cache& cache, CacheSet& cache_set, intptr_
 /*
  *  Cache write from thread t_id, at instruction inst to address 
  */
-void cache_write(Cache& cache, unsigned long address,int warp_id, int inst){
+void Cache::write(unsigned long address,int warp_id, int inst){
    
-    unsigned int warp_size = cache.warp_size;
 
-    /*
-       Get shifts and masks
-    */
-    unsigned int index_mask = cache.cache_index_mask;
-    unsigned int index_shift = cache.cache_index_shift; 
-    unsigned int tag_shift = cache.tag_shift;  
-
+   
     //get set index, tag, and line offest from address
-    int set_index = (address >> index_shift) & index_mask;
+    int set_index = (address >> cache_index_shift) & cache_index_mask;
     intptr_t tag = address >> tag_shift;
 
   
     //find cache set of access
-    CacheSet cache_set = cache.sets.at(set_index);
+    CacheSet cache_set = sets.at(set_index);
     
     //find if there is a matching cache line in cache
-    CacheLine *matching_line = cache_set_find_matching_line(cache,cache_set,tag);
+    CacheLine *matching_line = cache_set_find_matching_line(*this,cache_set,tag);
     
     //update find stack distance of cache line
-    unsigned int stack_dist = cache.stats.stackRef(tag,set_index);
+    unsigned int stack_dist = stats.stackRef(tag,set_index);
   
    
     //CASE: Write through, no allocate
-    if(cache.write_policy == CACHE_WRITEPOLICY_WTNA){
+    if(write_policy == CACHE_WRITEPOLICY_WTNA){
        if(matching_line == NULL){   //Write Miss
 
          //if cache line hasn't been accessed this warp
          if(!(warp_counter > stack_dist)){                
-            cache.stats.incrementWrites();
-            cache.stats.incrementWriteMisses();
+            stats.incrementWrites();
+            stats.incrementWriteMisses();
          }
 
         }
@@ -262,7 +251,7 @@ void cache_write(Cache& cache, unsigned long address,int warp_id, int inst){
       
         //if cache line hasn't been accessed this warp
         if(!(warp_counter > stack_dist)){
-              cache.stats.incrementWrites();
+            stats.incrementWrites();
         }
        }
     }
@@ -272,16 +261,16 @@ void cache_write(Cache& cache, unsigned long address,int warp_id, int inst){
         
          //if cache line hasn't been accessed this warp
          if(!(warp_counter > stack_dist)){      
-            cache.stats.incrementWrites();
-            cache.stats.incrementWriteMisses();
-            }
+            stats.incrementWrites();
+            stats.incrementWriteMisses();
+          }
 
          //find line for write
-         matching_line = cache_set_add(cache,cache_set,address, tag);
+         matching_line = cache_set_add(*this,cache_set,address, tag);
          
          //Line is dirty, needs to be written back to memory
         if(matching_line->state == CacheLine::MODIFIED){
-             cache.stats.incrementWriteBacks();
+            stats.incrementWriteBacks();
         }
 
        }
@@ -289,7 +278,7 @@ void cache_write(Cache& cache, unsigned long address,int warp_id, int inst){
         
           //if cache line hasn't been accessed this warp
           if(!(warp_counter > stack_dist)){
-               cache.stats.incrementWrites();
+              stats.incrementWrites();
           }
          
           matching_line->ctr = matching_line->ctr + 1;
@@ -312,43 +301,35 @@ void cache_write(Cache& cache, unsigned long address,int warp_id, int inst){
 /*
  * Cache read from thread t_id from instruction inst to address
  */
-void cache_read(Cache& cache, unsigned long address,int warp_id,int inst)
+void Cache::read(unsigned long address,int warp_id,int inst)
 {
 
-    unsigned int warp_size = cache.warp_size;
 
     /*
-       Setup shifts and masks
-    */
-    unsigned int index_mask = cache.cache_index_mask;
-    unsigned int index_shift = cache.cache_index_shift; 
-    unsigned int tag_shift = cache.tag_shift;  
-
-   /*
      use address to get line offset, tag, and set index
    */
-    int set_index = (address >> index_shift) & index_mask;
+    int set_index = (address >> cache_index_shift) & cache_index_mask;
     intptr_t tag = address >> tag_shift;
     
     //finds cache set of access
-    CacheSet cache_set = cache.sets.at(set_index);
+    CacheSet cache_set = sets.at(set_index);
     
     //finds matching line in cache set
-    CacheLine *matching_line = cache_set_find_matching_line(cache,cache_set,tag);
+    CacheLine *matching_line = cache_set_find_matching_line(*this,cache_set,tag);
     
     //finds stack distance of cache line and updates stack distance histogram
-    unsigned int stack_dist = cache.stats.stackRef(tag,set_index);
+    unsigned int stack_dist = stats.stackRef(tag,set_index);
     
     //CASE: Write through no-allocate
-    if(cache.write_policy == CACHE_WRITEPOLICY_WTNA){
+    if(write_policy == CACHE_WRITEPOLICY_WTNA){
         if(matching_line == NULL){                         //Read miss
-           matching_line = cache_set_add(cache,cache_set,address, tag);
+           matching_line = cache_set_add(*this,cache_set,address, tag);
       
 
           //if line has not been accessed this warp
           if(!(warp_counter > stack_dist)){
-              cache.stats.incrementReads();
-              cache.stats.incrementReadMisses(stack_dist,cache.num_sets * cache.associativity);
+              stats.incrementReads();
+              stats.incrementReadMisses(stack_dist,num_sets * associativity);
           }
 
         }
@@ -356,7 +337,7 @@ void cache_read(Cache& cache, unsigned long address,int warp_id,int inst)
           
           //if line has not been accessed this warp
           if(!(warp_counter > stack_dist)){
-             cache.stats.incrementReads();
+             stats.incrementReads();
           }
           
            matching_line->ctr = matching_line->ctr + 1;
@@ -369,15 +350,15 @@ void cache_read(Cache& cache, unsigned long address,int warp_id,int inst)
         
          //if line has not been accessed this warp
          if(!(warp_counter > stack_dist)){
-           cache.stats.incrementReads();
-           cache.stats.incrementReadMisses(stack_dist,cache.num_sets * cache.associativity);
+           stats.incrementReads();
+           stats.incrementReadMisses(stack_dist,num_sets * associativity);
          }
         
-         matching_line = cache_set_add(cache,cache_set,address, tag);
+         matching_line = cache_set_add(*this,cache_set,address, tag);
         
          //cache line is dirty and needs to be written back
          if(matching_line->state == CacheLine::MODIFIED){
-              cache.stats.incrementWriteBacks();
+              stats.incrementWriteBacks();
          }
 
            matching_line->state = CacheLine::VALID;              //Set line to valid
@@ -386,7 +367,7 @@ void cache_read(Cache& cache, unsigned long address,int warp_id,int inst)
          
           //if line has not been accessed this warp
           if(!(warp_counter > stack_dist)){
-            cache.stats.incrementReads();
+            stats.incrementReads();
           }
 
           matching_line->ctr = matching_line->ctr + 1;
