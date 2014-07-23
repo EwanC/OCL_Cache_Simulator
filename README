@@ -34,17 +34,23 @@ Axtor[bitbucket.org/gnarf/axtor/, Simon Moll]
 
 /////////////////////// Build Instructions ///////////////////////
  
+ # First build the LLVM passes by copying them into your llvm source tree, and rebuilding LLVM
+
  $> cp SOURCE_DIR/passes/*   LLVM_SOURCE_DIR/lib/Transforms/
  $> cd LLVM_SOURCE_DIR/lib/Transforms
- $> add CMAKE_LISTS
+ $> append 'add_subdirectory(MemTrace), add_subdirectory(MemSize)' to CMakeLists.txt 
+ $> rebuild LLVM
+ $> export VIS_PASSES as path to shared object files for passes
+
+ # Next build the tool and export location of built 'tools/'directory as VIS_TOOLS
+ # and location of SOURCE_DIR/support/scripts as SCRIPT_PATH
 
  $> mkdir build
  $> cd build
  $> cmake [SOURCE_DIR]
  $> make
- $> export SCRIPT
  $> export VIS_TOOLS
- $> export VIS_PASSES
+ $> export SCRIPT_PATH
  
   
 
