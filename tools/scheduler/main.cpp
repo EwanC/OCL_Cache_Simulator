@@ -20,6 +20,13 @@
 
 unsigned int argWarpSize;
 
+// File used for plotting memory accesses using R.
+std::ofstream graph("graph.out",std::ofstream::out);
+
+// File used for simulating cache performance. 
+std::ofstream cache("cache.out",std::ofstream::out);
+
+  
 
 void assignAlgorithm ( char* argv[], int argc) {
 
@@ -79,17 +86,6 @@ void validateArguments(int argc, char *argv[]){
 */
 void writeOutput(const Trace* trace){
 
-  // File used for plotting memory accesses using R.
-  std::ofstream graph("graph.out",std::ofstream::out | std::ofstream::app);
-
-  // File used for simulating cache performance. 
-  std::ofstream cache("cache.out",std::ofstream::out | std::ofstream::app);
-
-  
-  if(!graph.is_open() || !cache.is_open()  ){
-    std::cout <<"Error, could not open output file\n";
-    return;
-  }
 
   /*
     Cache simulation needs to know the number of threads in a warp and
@@ -120,8 +116,7 @@ void writeOutput(const Trace* trace){
 
   cache << "------------------------"<<std::endl;
 
-  graph.close();
-  cache.close();
+  
 }
 
 /*
@@ -247,6 +242,12 @@ int main(int argc, char *argv[]){
 
   parse(input_file,executions);
 
+
+  if(!graph.is_open() || !cache.is_open()  ){
+    std::cout <<"Error, could not open output file\n";
+    exit(0);
+  }
+
   // Schedule trace according to specified algorithm.
   if(Trace::algorithm != Trace::NONE){
     for_each(executions.begin(),executions.end(),schedule);
@@ -254,6 +255,9 @@ int main(int argc, char *argv[]){
   
   // Prints reordered trace to output file.
   for_each(executions.begin(),executions.end(),writeOutput);
+  graph.close();
+  cache.close();
+
 
   return 0;
 }
