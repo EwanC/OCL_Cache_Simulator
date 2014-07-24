@@ -18,7 +18,7 @@
 
 */
 
-unsigned int argWarpSize;
+unsigned int argWarpSize = 32;
 
 // File used for plotting memory accesses using R.
 std::ofstream graph("graph.out",std::ofstream::out);
@@ -41,10 +41,9 @@ void assignAlgorithm ( char* argv[], int argc) {
   }
   else if(!strcmp(argv[2],"coalesced")){ // Coalesced scheduling
 
-    if(argc < 4){
-      argWarpSize = 32;
-    } else{
+    if(argc >= 4){
       argWarpSize = atoi(argv[3]);
+    
     }
     Trace::algorithm = Trace::COALESCED;
   }
@@ -247,6 +246,7 @@ int main(int argc, char *argv[]){
     std::cout <<"Error, could not open output file\n";
     exit(0);
   }
+
 
   // Schedule trace according to specified algorithm.
   if(Trace::algorithm != Trace::NONE){

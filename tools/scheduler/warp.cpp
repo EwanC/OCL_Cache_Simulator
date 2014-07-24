@@ -21,7 +21,7 @@ loopTuple minGreaterThan(std::vector<loopTuple> vec,int minLabel){
   
     unsigned int minVal =0;
 
-    int lowestL= std::numeric_limits<unsigned int>::max();
+    int lowestL= std::numeric_limits<int>::max();
 
     for ( auto loop : vec ){
          if(std::get<0>(loop) < lowestL && std::get<0>(loop) > minLabel){
@@ -41,6 +41,7 @@ loopTuple minGreaterThan(std::vector<loopTuple> vec,int minLabel){
 bool earlierLoop(const Loop_timestamp& a, const Loop_timestamp& b){
     
 
+
     unsigned int minDepth = std::min(a.depth,b.depth);
 
     loopTuple minA = loopTuple(-1,0);
@@ -52,7 +53,7 @@ bool earlierLoop(const Loop_timestamp& a, const Loop_timestamp& b){
       //find not processes outermost loop
       minA = minGreaterThan(a.counters,std::get<0>(minA));
       minB = minGreaterThan(b.counters,std::get<0>(minB));
-      
+  
      
       //if outmost loops if not to same 
       if(std::get<0>(minA) != std::get<0>(minB))
@@ -112,18 +113,19 @@ unsigned int getWarpId(const Trace_entry& a){
   unsigned int warp2D = 0;
   unsigned int warp3D = 0;
 
-  
   if(a.getPointer()->getDim() > 1){
     warp2D = a.getThreadId(1) % a.getPointer()->getLocal(1);
   }
-  
+
+
   if(a.getPointer()->getDim() > 2){
     warp3D = a.getThreadId(2) % a.getPointer()->getLocal(2);
   }
-
   
   unsigned int result = warp1D + (warp2D * a.getPointer()->getLocal(0));
+
   result += warp3D * (a.getPointer()->getLocal(0) * a.getPointer()->getLocal(1));
+ 
   result /= a.getPointer()->getWarpSize();
 
  // result = result + (workgroup *  a.getPointer()->warpsPerWorkgroup());  
@@ -150,30 +152,33 @@ unsigned int getWarpId(const Trace_entry& a){
 */
 
 bool warp_compare( const Trace_entry& a, const Trace_entry& b){
-  
 
   // entry A is executed in a loop before entry B
   if (earlierLoop(a.getLoops(),b.getLoops()) ){
+
        return true;
   }
 
   // entry B is executed in a loop before entry A
   if(earlierLoop(b.getLoops(),a.getLoops()) ){
-       return false;
+ 
+      return false;
   }
 
   // entry A is executed in a earlier instruction than entry B
-  if( a.getName() !=  b.getName())
-      return a.getName() < b.getName();
+  if( a.getName() !=  b.getName()){
 
+      return a.getName() < b.getName();
+  }
   // entry A is executed in a 'earlier' warp than entry B
 
   unsigned int warpA = getWarpId(a);
   unsigned int warpB = getWarpId(b);
 
-  if(warpA != warpB)
+  if(warpA != warpB){
      return warpA < warpB;
-  
+  }
+
   // entry A is has a lower thread id than enry B
   return a.getThreadVal(*(a.getPointer())) < b.getThreadVal(*(b.getPointer()));
 
