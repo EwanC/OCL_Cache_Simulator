@@ -38,11 +38,11 @@
 #define MAX_SOURCE_SIZE (0x100000)
 
 /* Problem size. */
-# define NI 64 //512
-# define NJ 64 //512
-# define NK 64 //512
-# define NL 64 //512
-# define NM 64 //512
+# define NI 128 //512
+# define NJ 128 //512
+# define NK 128 //512
+# define NL 128 //512
+# define NM 128 //512
 
 /* Thread block dimensions */
 #define DIM_LOCAL_WORK_GROUP_X 32
@@ -97,11 +97,8 @@ void compareResults(DATA_TYPE *G, DATA_TYPE *G_outputFromGpu)
 		}
 	}
         
-        assert(fail == 0 && "CPU - GPU Computation does not match!");
-
-        std::cout << "Ok!\n";
-	
-
+    assert(fail == 0 && "CPU - GPU Computation does not match!");
+    std::cout << "Ok!\n";
 }
 
 
@@ -156,14 +153,14 @@ void cl_mem_init(DATA_TYPE* A, DATA_TYPE* B, DATA_TYPE* C, DATA_TYPE* D, DATA_TY
 		
 	if(errcode != CL_SUCCESS) printf("Error in creating buffers\n");
 
- queue.writeBuffer(*a_mem_obj, sizeof(DATA_TYPE) * NI * NK, A);
- queue.writeBuffer(*b_mem_obj, sizeof(DATA_TYPE) * NK * NJ, B);
- queue.writeBuffer(*c_mem_obj, sizeof(DATA_TYPE) * NJ * NM, C);
- queue.writeBuffer(*d_mem_obj, sizeof(DATA_TYPE) * NM * NL, D);
- queue.writeBuffer(*e_mem_obj, sizeof(DATA_TYPE) * NI * NJ, E);	
- queue.writeBuffer(*f_mem_obj, sizeof(DATA_TYPE) * NJ * NL, F);
- queue.writeBuffer(*g_mem_obj, sizeof(DATA_TYPE) * NI * NL, G);
- queue.finish();
+    queue.writeBuffer(*a_mem_obj, sizeof(DATA_TYPE) * NI * NK, A);
+    queue.writeBuffer(*b_mem_obj, sizeof(DATA_TYPE) * NK * NJ, B);
+    queue.writeBuffer(*c_mem_obj, sizeof(DATA_TYPE) * NJ * NM, C);
+    queue.writeBuffer(*d_mem_obj, sizeof(DATA_TYPE) * NM * NL, D);
+    queue.writeBuffer(*e_mem_obj, sizeof(DATA_TYPE) * NI * NJ, E);	
+    queue.writeBuffer(*f_mem_obj, sizeof(DATA_TYPE) * NJ * NL, F);
+    queue.writeBuffer(*g_mem_obj, sizeof(DATA_TYPE) * NI * NL, G);
+    queue.finish();
 }
 
 void cl_launch_kernel(Queue& queue)
@@ -189,10 +186,9 @@ void cl_launch_kernel(Queue& queue)
 	kernel1->setArgument( 5, sizeof(int), (void *)&nk);
 
 	// Execute the OpenCL kernel
-
 	queue.run(*kernel1, 2, 0, globalWorkSize, localWorkSize);
 	
-        //clEnqueueBarrier(clCommandQue);
+    //Second kernel
 
 	globalWorkSize[0] = (size_t)ceil(((float)NL) / ((float)DIM_LOCAL_WORK_GROUP_X)) * DIM_LOCAL_WORK_GROUP_X;
 	globalWorkSize[1] = (size_t)ceil(((float)NJ) / ((float)DIM_LOCAL_WORK_GROUP_Y)) * DIM_LOCAL_WORK_GROUP_Y;
@@ -206,19 +202,20 @@ void cl_launch_kernel(Queue& queue)
 
 	// Execute the OpenCL kernel
 	queue.run(*kernel2, 2, 0, globalWorkSize, localWorkSize);	
-        //clEnqueueBarrier(clCommandQue);
+     
+    //Third kernel
 
 	globalWorkSize[0] = (size_t)ceil(((float)NL) / ((float)DIM_LOCAL_WORK_GROUP_X)) * DIM_LOCAL_WORK_GROUP_X;
 	globalWorkSize[1] = (size_t)ceil(((float)NI) / ((float)DIM_LOCAL_WORK_GROUP_Y)) * DIM_LOCAL_WORK_GROUP_Y;
 	
-       kernel3->setArgument( 0,*e_mem_obj);
-       kernel3->setArgument( 1,*f_mem_obj);
-       kernel3->setArgument( 2,*g_mem_obj);
-       kernel3->setArgument( 3, sizeof(int), (void *)&ni);
-       kernel3->setArgument( 4, sizeof(int), (void *)&nl);
-       kernel3->setArgument( 5, sizeof(int), (void *)&nj);
+    kernel3->setArgument( 0,*e_mem_obj);
+    kernel3->setArgument( 1,*f_mem_obj);
+    kernel3->setArgument( 2,*g_mem_obj);
+    kernel3->setArgument( 3, sizeof(int), (void *)&ni);
+    kernel3->setArgument( 4, sizeof(int), (void *)&nl);
+    kernel3->setArgument( 5, sizeof(int), (void *)&nj);
 	
-       // Execute the OpenCL kernel
+    // Execute the OpenCL kernel
 	queue.run(*kernel3, 2, 0, globalWorkSize, localWorkSize);	
 	queue.finish();
 }
@@ -229,7 +226,7 @@ void cl_clean_up()
 	delete kernel1;
 	delete kernel2;
 	delete kernel3;
-        delete platform;
+    delete platform;
 
 	delete a_mem_obj;
 	delete b_mem_obj;
@@ -313,26 +310,26 @@ int main(void)
 
 	init_array(A, B, C, D);
 	
-        platform = new Platform(PLATFORM_ID);
-        context = platform->getContext();
-        Device device = platform->getDevice(DEVICE_ID);
-        Queue queue(*context,device,Queue::EnableProfiling); 
+    platform = new Platform(PLATFORM_ID);
+    context = platform->getContext();
+    Device device = platform->getDevice(DEVICE_ID);
+    Queue queue(*context,device,Queue::EnableProfiling); 
 
-        cl_mem_init(A, B, C, D, E, F, G,queue);
+    cl_mem_init(A, B, C, D, E, F, G,queue);
 
-        Program program(context,KERNEL_DIRECTORY KERNEL_FILE_NAME);
-        if(!program.build(device)){
-          std::cout << "Error building the program: \n";
-          std::cout <<program.getBuildLog(device); 
-        }
+    Program program(context,KERNEL_DIRECTORY KERNEL_FILE_NAME);
+    if(!program.build(device)){
+        std::cout << "Error building the program: \n";
+        std::cout <<program.getBuildLog(device); 
+    }
  
-        kernel1=program.createKernel(kernel1Name.c_str());
-        kernel2=program.createKernel(kernel2Name.c_str());
-        kernel3=program.createKernel(kernel3Name.c_str());
-        cl_launch_kernel(queue);
+    kernel1=program.createKernel(kernel1Name.c_str());
+    kernel2=program.createKernel(kernel2Name.c_str());
+    kernel3=program.createKernel(kernel3Name.c_str());
+    cl_launch_kernel(queue);
 
-	 queue.readBuffer(*g_mem_obj, sizeof(DATA_TYPE) * NI * NL, G_outputFromGpu);
-         queue.finish();
+	queue.readBuffer(*g_mem_obj, sizeof(DATA_TYPE) * NI * NL, G_outputFromGpu);
+    queue.finish();
 
 	mm3_cpu(A, B, C, D, E, F, G);
 	compareResults(G, G_outputFromGpu);

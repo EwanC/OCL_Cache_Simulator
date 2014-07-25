@@ -40,8 +40,8 @@
 #define MAX_SOURCE_SIZE (0x100000)
 
 /* Problem size */
-#define M 256//2048
-#define N 256//2048
+#define M 128//2048
+#define N 128//2048
 
 /* Thread block dimensions for kernel 1*/
 #define DIM_LOCAL_WORK_GROUP_KERNEL_1_X 256

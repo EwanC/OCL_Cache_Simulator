@@ -18,9 +18,9 @@ using namespace boost::filesystem;
 #define REPETITIONS 1
 #define ELEMENT_LIMIT 5
 #define DIMENSIONS 2
-#define BLOCK_SIZE 16
-#define W_SIZE BLOCK_SIZE * 8
-#define H_SIZE BLOCK_SIZE * 8
+#define BLOCK_SIZE 32
+#define W_SIZE BLOCK_SIZE * 5
+#define H_SIZE BLOCK_SIZE * 5
 #define DEVICE_ID 0
 #define PLATFORM_ID 0
 #define KERNEL_FILE_NAME "mm.cl"

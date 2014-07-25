@@ -39,7 +39,7 @@
 #define MAX_SOURCE_SIZE (0x100000)
 
 /* Problem size. */
-#define NX_DEFAULT 128 * 32
+#define NX_DEFAULT 1024 * 32//128 * 32
 #define NY_DEFAULT 64
 
 /* Thread block dimensions */

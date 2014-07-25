@@ -40,7 +40,7 @@
 #define MAX_SOURCE_SIZE (0x100000)
 
 /* Problem size */
-#define NI 3
+#define NI 8
 #define NJ_DEFAULT 256
 #define NK_DEFAULT 256
 

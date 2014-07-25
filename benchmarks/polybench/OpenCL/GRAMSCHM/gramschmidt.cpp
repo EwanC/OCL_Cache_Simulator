@@ -41,7 +41,7 @@
 
 /* Problem size */
 #define M 256 //2048
-#define N 256 //2048
+#define N 64 //2048
 
 /* Thread block dimensions */
 #define DIM_THREAD_BLOCK_X 256
@@ -138,7 +138,7 @@ void cl_launch_kernel(Queue& queue)
 	int k;
 	for (k = 0; k < N; k++)
 	{
-		// Set the arguments of the kernel
+	  // Set the arguments of the kernel
 	  kernel1->setArgument( 0,*a_mem_obj);
 	  kernel1->setArgument( 1,*r_mem_obj);
 	  kernel1->setArgument( 2,*q_mem_obj);
@@ -146,8 +146,8 @@ void cl_launch_kernel(Queue& queue)
 	  kernel1->setArgument( 4, sizeof(int), (void *)&m);
 	  kernel1->setArgument( 5, sizeof(int), (void *)&n);
 	
-          // Execute the OpenCL kernel
-          queue.run(*kernel1, 1, 0, globalWorkSizeKernel1, localWorkSize);
+      // Execute the OpenCL kernel
+      queue.run(*kernel1, 1, 0, globalWorkSizeKernel1, localWorkSize);
           
 	  kernel2->setArgument( 0, *a_mem_obj);
 	  kernel2->setArgument( 1, *r_mem_obj);
@@ -158,7 +158,7 @@ void cl_launch_kernel(Queue& queue)
 	
 	
 	  // Execute the OpenCL kernel
-          queue.run(*kernel2, 1, 0,globalWorkSizeKernel2, localWorkSize);
+      queue.run(*kernel2, 1, 0,globalWorkSizeKernel2, localWorkSize);
 
 	  kernel3->setArgument( 0,*a_mem_obj);
 	  kernel3->setArgument( 1,*r_mem_obj);
@@ -171,17 +171,17 @@ void cl_launch_kernel(Queue& queue)
 	  queue.run(*kernel3, 1, 0,globalWorkSizeKernel3, localWorkSize);
 
 	}
-        queue.finish();
+    queue.finish();
 }
 
 
 void cl_clean_up()
 {
 	// Clean up
-        delete platform;
-        delete kernel1;
-        delete kernel2;
-        delete kernel3;
+    delete platform;
+    delete kernel1;
+    delete kernel2;
+    delete kernel3;
 	delete a_mem_obj;
 	delete r_mem_obj;
 	delete q_mem_obj;
@@ -236,25 +236,25 @@ int main(void)
 
 	init_array(A);
         
-        platform = new Platform(PLATFORM_ID);
-        context = platform->getContext();
-        Device device = platform->getDevice(DEVICE_ID);
-        Queue queue(*context,device,Queue::EnableProfiling); 
+    platform = new Platform(PLATFORM_ID);
+    context = platform->getContext();
+    Device device = platform->getDevice(DEVICE_ID);
+    Queue queue(*context,device,Queue::EnableProfiling); 
   
 	cl_mem_init(A,queue);
-        Program program(context,KERNEL_DIRECTORY KERNEL_FILE_NAME);
-        if(!program.build(device)){
-           std::cout << "Error building the program: \n";
-           std::cout <<program.getBuildLog(device); 
-        }
-        kernel1=program.createKernel(kernel1Name.c_str());
-        kernel2=program.createKernel(kernel2Name.c_str());
-        kernel3=program.createKernel(kernel3Name.c_str());
+    Program program(context,KERNEL_DIRECTORY KERNEL_FILE_NAME);
+    if(!program.build(device)){
+        std::cout << "Error building the program: \n";
+        std::cout <<program.getBuildLog(device); 
+    }
+    kernel1=program.createKernel(kernel1Name.c_str());
+    kernel2=program.createKernel(kernel2Name.c_str());
+    kernel3=program.createKernel(kernel3Name.c_str());
         
-        cl_launch_kernel(queue);
+    cl_launch_kernel(queue);
 
 	queue.readBuffer(*a_mem_obj, M*N*sizeof(DATA_TYPE), A_outputFromGpu);
-        queue.finish(); 
+    queue.finish(); 
 
 	gramschmidt(A, R, Q);	
 	compareResults(A, A_outputFromGpu);

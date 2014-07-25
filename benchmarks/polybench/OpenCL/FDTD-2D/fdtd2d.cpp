@@ -39,7 +39,7 @@
 #define ERROR_THRESHOLD 0.05
 
 /* Problem size */
-#define TMAX 3//500
+#define TMAX 10//500
 #define NX 256 //2048
 #define NY 256 //2048
 

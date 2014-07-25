@@ -39,8 +39,8 @@
 #define MAX_SOURCE_SIZE (0x100000)
 
 /* Problem size */
-#define NI_DEFAULT 256 //4096
-#define NJ_DEFAULT 256 //4096
+#define NI_DEFAULT 1024 //4096
+#define NJ_DEFAULT 1024 //4096
 
 /* Thread block dimensions */
 #define DIM_LOCAL_WORK_GROUP_X 32
