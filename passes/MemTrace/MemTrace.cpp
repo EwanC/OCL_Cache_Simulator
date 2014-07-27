@@ -219,7 +219,6 @@ namespace {
     IRBuilder<> builder(i);
 
     StringRef name;
-    long unsigned int name_int =0;
     
     char *inst_name = (char*)malloc(sizeof(char) * 10);
 
@@ -254,8 +253,7 @@ namespace {
     }
 
     //use a radix to encode the name
-    name.getAsInteger(36,name_int);
-    Value* name_val= builder.getInt64(name_int);
+    Value* name_val= builder.getInt64(inst_ctr);
 
     //combine first 31 bits with second 33
     Value* trace_item = builder.CreateOr(addr,name_val,"trace_arg");

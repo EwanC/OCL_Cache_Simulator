@@ -162,7 +162,7 @@ void getInstruction(std::string line,Trace_entry& curr){
   long int as_int = strtol(line.c_str(),NULL,16); 
                 
   // Decode from radix to get character string from integer
-  curr.setName(decodeRadix(as_int));
+  curr.setName(as_int);
 
 
 } 
@@ -244,64 +244,4 @@ void getThreadIds(std::string line, Trace_entry& curr,Trace& trace){
    }
   
 } 
-
-
-//given a base 36 integer decodes the instruction name
-unsigned int decodeRadix(int input){
-
-
-  //mappings from integers to characters
-  char radix[] = {'0','1','2','3','4','5','6','7','8','9','A','B','C',
-  'D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T',
-  'U','V','W','X','Y','Z'};
-
-  int radix_len = 36;
-  int len_cubed = radix_len* radix_len * radix_len;
-  int len_squared = radix_len* radix_len;
-
-  std::string output;
-
- 
-  if(input > len_cubed){
-    for(int k= radix_len;k>0;k--){
-      if(input > k*len_cubed){
-         input -= k*len_cubed;
-         output.push_back(radix[k]);
-         break;
-      }
-    }
-  }
-
-
-  if(input > len_squared){
-      for(int k=radix_len;k>0;k--){
-         if(input > k*len_squared){
-          input -= k*len_squared;
-          output.push_back(radix[k]);
-
-          break;
-         }
-     }
-  }
-
-  if(input > radix_len){
-    for(int k=radix_len;k>0;k--){
-      if(input > k*radix_len){
-        input -= k*radix_len;
-        output.push_back(radix[k]);
- 
-        break;
-      }
-     }
-  }
-
-
- if(input > 0){
-    output.push_back(radix[input]);   
- }
- 
- output.erase(0,1);
-
- return  strtoul(output.c_str(),NULL,10);
-}
 
