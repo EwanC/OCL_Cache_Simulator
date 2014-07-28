@@ -30,7 +30,6 @@ std::vector<unsigned int>get_workgroups(unsigned int warp_size,unsigned int tota
       while(std::find(workgroups.begin(),workgroups.end(),added) != workgroups.end() ){
           added = rand() % total_wk;
       }
-    //  std::cout << "wk group " << added << std::endl;
       workgroups.push_back(added);
   }
 
@@ -45,7 +44,7 @@ void exec_trace(TRACE_VEC& executions,Cache& cache){
 
   unsigned int n=0;
   for(TRACE_VEC::iterator iter = executions.begin(), end = executions.end(); iter != end; ++iter){
-      std::cout <<"\nExecuting Trace " << n++ << " of "<<executions.size();
+      std::cout <<"\nExecuting Trace " << n++ << " of "<<executions.size()<<std::endl;
       cache.warp_size = std::get<1>(*iter);
       cache.reset_memory();
 

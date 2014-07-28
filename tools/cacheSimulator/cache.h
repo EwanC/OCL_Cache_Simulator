@@ -75,6 +75,8 @@ class Cache
    //instruction identifier of last memory access
    int last_inst;
 	
+   void update(int warp_id,int inst);
+
   public:
 
    /*

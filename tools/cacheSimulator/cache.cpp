@@ -212,12 +212,22 @@ static CacheLine *cache_set_add(const Cache& cache, CacheSet& cache_set, intptr_
     return line;
 }
 
+void Cache::update(int warp_id,int inst){
+  //increment counter, resetting when all warp accesses have been made 
+  if(warp_counter >= warp_size || (warp_counter != 0 &&(warp_id != last_id ||  last_inst != inst)))
+      warp_counter=0;
+  else
+      warp_counter++;
+}
+
+
 /*
  *  Cache write from thread t_id, at instruction inst to address 
  */
 void Cache::write(unsigned long address,int warp_id, int inst){
-   
-
+    
+    update(warp_id,inst);
+ 
    
     //get set index, tag, and line offest from address
     int set_index = (address >> cache_index_shift) & cache_index_mask;
@@ -287,12 +297,7 @@ void Cache::write(unsigned long address,int warp_id, int inst){
        matching_line->state = CacheLine::MODIFIED;            //Set to dirty
     }
      
-    //increment counter, resetting when all warp accesses have been made 
-    if(warp_counter >= warp_size-1 || (warp_counter != 0 &&(warp_id != last_id ||  last_inst != inst)))
-      warp_counter=0;
-    else
-      warp_counter++;
- 
+   
     //update details of previous access
     last_inst = inst;
     last_id = warp_id;   
@@ -303,6 +308,8 @@ void Cache::write(unsigned long address,int warp_id, int inst){
  */
 void Cache::read(unsigned long address,int warp_id,int inst)
 {
+    //update warp counter, resetting if all warp accessed have been made
+    update(warp_id,inst);
 
 
     /*
@@ -310,7 +317,7 @@ void Cache::read(unsigned long address,int warp_id,int inst)
    */
     int set_index = (address >> cache_index_shift) & cache_index_mask;
     intptr_t tag = address >> tag_shift;
-    
+
     //finds cache set of access
     CacheSet cache_set = sets.at(set_index);
     
@@ -331,17 +338,20 @@ void Cache::read(unsigned long address,int warp_id,int inst)
               stats.incrementReads();
               stats.incrementReadMisses(stack_dist,num_sets * associativity);
           }
+          
 
         }
         else{    //Read hit
           
           //if line has not been accessed this warp
           if(!(warp_counter > stack_dist)){
+ 
              stats.incrementReads();
           }
           
            matching_line->ctr = matching_line->ctr + 1;
         }
+
     }
     //CASE: Write back allocate
     else{
@@ -374,12 +384,7 @@ void Cache::read(unsigned long address,int warp_id,int inst)
         }
     }
 
-    //update warp counter, resetting if all warp accessed have been made
-    if(warp_counter >= warp_size-1 || (warp_counter != 0 &&(warp_id != last_id ||  last_inst != inst))){
-      warp_counter=0;
-    }
-    else
-      warp_counter++;
+    
     
     //update details of previous access
     last_inst = inst;

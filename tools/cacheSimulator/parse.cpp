@@ -15,7 +15,7 @@ TRACE_VEC parse(std::ifstream& input){
   sscanf (line.c_str(),"%u %u",&warp_size,&total_wk);
   std::vector<unsigned int> workgroups = get_workgroups(warp_size,total_wk);
   
-
+  
   /*
   *  Reads memory trace from file 
   */  
@@ -29,8 +29,12 @@ TRACE_VEC parse(std::ifstream& input){
          exections.push_back(std::make_tuple(workgroups,warp_size,trace));
          
          getline(input,line);
-         sscanf (line.c_str(),"%u %u",&warp_size,&total_wk);
-         workgroups = get_workgroups(warp_size,total_wk);
+         if(!input.eof()){
+
+         
+           sscanf (line.c_str(),"%u %u",&warp_size,&total_wk);
+           workgroups = get_workgroups(warp_size,total_wk);
+        } 
          
     }else{
 

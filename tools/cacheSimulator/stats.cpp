@@ -19,12 +19,14 @@ void Stats::incrementReads(){
 
 void Stats::incrementReadMisses(unsigned int stack_dist, unsigned int lines){
     ++readMisses;
-   
+    
+
    if(stack_dist  == Infinity){
       ++coldMisses;
    }
    else if(stack_dist >= lines ){
      ++capacityMisses;
+
    }
    else{
     ++conflictMisses;
