@@ -27,7 +27,7 @@ def Dependencies():
 
 
 def parseArgs():
-    parser = OptionParser(usage="Usage: %prog [options] 'OpenCL Program' 'Kernel Name'",
+    parser = OptionParser(usage="Usage: %prog [options] 'OpenCL Program' ",
                         version="Visualizer 1.0")
 
     parser.add_option("-s","--simulate",
@@ -47,7 +47,7 @@ def parseArgs():
                          action="store",
                          type="choice",
                          choices=["coalesced","rr","seq","rand","none"],
-                         default="coalesced",
+                         default="none",
                          dest="alg",
                          help="Scheduling algorithm")
 
@@ -58,7 +58,6 @@ def parseArgs():
     return (options,args)
 
 def setup_env():
-   os.environ["SCRIPT_PATH"] = os.getcwd()+"/support/scripts" 
 
    tools  = os.getenv("VIS_TOOLS")
    if not tools:
@@ -96,7 +95,7 @@ def main():
     graph = os.getcwd()+ "/graph.out"
     cache = os.getcwd() + "/cache.out"
     
-    R_path = os.getcwd()+"/tools/R/graph.R "
+    R_path = os.getcwd()+"/support/scripts/graph.R "
     cache_path = build_dir+"/cacheSimulator/cachSim "   
 
     os.system("Rscript " + R_path + graph)

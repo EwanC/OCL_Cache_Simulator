@@ -31,6 +31,8 @@ set(OPENCL_WRAPPER_UTILS_LIB "OpenCLWrapperUtils")
 set(OPENCL_WRAPPER_UTILS_LIB_DIR "Utils")
 set(OPENCL_WRAPPER_INCLUDE_DIR "include")
 
+set(SCRIPT_DIR "scripts")
+set(SCRIPT_PATH ${SUPPORT_PATH}/${SCRIPT_DIR})
 
 
 #-------------------------------------------------

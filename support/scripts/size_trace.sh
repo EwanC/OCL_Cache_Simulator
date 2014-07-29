@@ -5,17 +5,13 @@ OPT=opt
 AXTOR=axtor
 
 INPUT_FILE=$1
+SCRIPT_PATH=$2
 OUTPUT_FILE=/tmp/output.cl
 
 
 
 if [ -z "$VIS_PASSES" ]; then
   echo "Need to export $VIS_PASSES"
-  exit 1
-fi
-
-if [ -z "$SCRIPT_PATH" ]; then
-  echo "Need to export $SCRIPT_PATH"
   exit 1
 fi
 

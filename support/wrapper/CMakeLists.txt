@@ -8,5 +8,7 @@ set(BOOST_INCLUDE_PATHS "usr/include")
 set(BOOST_LIB_PATHS "usr/lib")
 
 
+configure_file("${INCLUDE_PATH}/${OPENCL_WRAPPER_LIB}/SystemConfiguration.h.cmake" "${INCLUDE_PATH}/${OPENCL_WRAPPER_LIB}/SystemConfig.h")
+
 add_subdirectory(${UTILS_PATH})
 add_subdirectory(${CODE_LIB_PATH})

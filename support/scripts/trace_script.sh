@@ -5,6 +5,7 @@ OPT=opt
 AXTOR=axtor
 
 INPUT_FILE=$1
+SCRIPT_PATH=$2
 OUTPUT_FILE=/tmp/output.cl
 
 if [ -z "$VIS_PASSES" ]; then
@@ -12,10 +13,6 @@ if [ -z "$VIS_PASSES" ]; then
   exit 1
 fi
 
-if [ -z "$SCRIPT_PATH" ]; then
-  echo "Need to export $SCRIPT_PATH"
-  exit 1
-fi
 
 OCLDEF=$SCRIPT_PATH/ocldef_intel.h
 OPTIMIZATION=-O0

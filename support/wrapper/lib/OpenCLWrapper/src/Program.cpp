@@ -1,4 +1,6 @@
 #include "OpenCLWrapper/Program.h"
+#include "OpenCLWrapper/SystemConfig.h"
+
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -109,11 +111,6 @@ void Program::createFromSource(const SourceFile& sourceFile) {
   /*
      Execute first transformation by running scripts
   */  
-  const char* scriptPath = getenv("SCRIPT_PATH");  
-  if(scriptPath == NULL){
-    std::cout <<"Error: SCRIPT_PATH enivronmental Variable not set\n";
-    exit(0);
-  } 
 
   const char* passPath = getenv("VIS_PASSES");  
   if(passPath == NULL){
@@ -123,11 +120,14 @@ void Program::createFromSource(const SourceFile& sourceFile) {
 
 
 
-  std::string opt_script(scriptPath);
-  opt_script.append("/size_trace.sh /tmp/tmp_size.cl");
+  std::string opt_script(SCRIPT_PATH);
+  opt_script.append("/size_trace.sh /tmp/tmp_size.cl ");
+  opt_script.append(SCRIPT_PATH);
+
   system(opt_script.c_str());
-  system(std::string(scriptPath).append("/vi_size_script.sh").c_str());
- 
+  system(std::string(SCRIPT_PATH).append("/vi_size_script.sh").c_str());
+  
+
   /*
      Create cl_Program object from result of first optimization
   */
@@ -174,10 +174,11 @@ void Program::createFromSource(const SourceFile& sourceFile) {
   /*
     Execute second LLVM instrumentation by calling scripts
   */
-  opt_script = std::string(scriptPath).append("/trace_script.sh /tmp/tmp_mem.cl ");
-  
+  opt_script = std::string(SCRIPT_PATH).append("/trace_script.sh /tmp/tmp_mem.cl ");
+  opt_script.append(SCRIPT_PATH);
+
   system(opt_script.c_str());
-  system(std::string(scriptPath).append("/vi_trace_script.sh").c_str());
+  system(std::string(SCRIPT_PATH).append("/vi_trace_script.sh").c_str());
 
   
   /*
