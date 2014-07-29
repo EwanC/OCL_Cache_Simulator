@@ -24,7 +24,9 @@ memory accesses are then reordered using a scheduler. Additionally this trace ca
 cache simulation to predict it's performance. 
 
 However by default the original trace is plotted as a graph without any cache prediction or scheduling.
-This is done using R[http://www.r-project.org/]. However the coalescing done by GPU's is not taken into
+This is done using R[http://www.r-project.org/]. In the graph the colour of a point represents the thread
+which made the accesses while the y-axis value represents the element index, which assumes that all data elements
+are 4 Bytes in size. However the coalescing done by GPU's is not taken into
 account and all plots are of individual accesses.
 
 
