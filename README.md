@@ -1,12 +1,13 @@
-==============================================================
-           
-                 #  OpenCL Visualiser
-           
-==============================================================
+==================================================================
+#                     OpenCL Visualiser
+==================================================================           
 
 ###July 2014  Ewan Crawford[ewan.cr@gmail.com]
+License: GPL
 
-//////////////////////// Introduction ////////////////////////////
+==================================================================
+
+####               Introduction 
 
 Tool for visualising the memory accesses of OpenCL programs. Extended to predict the cache performance of the
 OpenCL programs on FERMI GPUs by rearranging the memory accesses to be platform independent. Cache prediction
@@ -40,15 +41,15 @@ Example graphs from polybench benchmarks that are rearranged using the scheduler
 ![Alt text](/examples/fdtd2d.png?raw=true "2-D Finite Different Time Domain Kernel(FDTD-2D)")
 
 
-
-//////////////////////// Dependencies //////////////////////////// 
-
+====================================================================
+####                    Dependencies 
 LLVM 3.3[http://llvm.org/]
 Axtor[bitbucket.org/gnarf/axtor/, Simon Moll]
 
 This tool is only available for Linux, and additionally has only been tested on Ubuntu and Mint distributions.
 
-/////////////////////// Build Instructions ///////////////////////
+====================================================================
+####                    Build Instructions 
  
  # First build the LLVM passes by copying them into your llvm source tree, and rebuilding LLVM
 
@@ -69,8 +70,8 @@ This tool is only available for Linux, and additionally has only been tested on 
  # Axtor needs to be built from bitbucket.org/gnarf/axtor/ and executable added to $PATH
  # R graphing tool also needs to be installed so that 'Rscipt' is in $PATH
   
-
-///////////////////// Project structure ///////////////////////////
+=====================================================================
+####                     Project structure 
 
 visualise.py      --Links components together so the tool can be run easily                  
 
