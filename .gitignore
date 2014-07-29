@@ -3,4 +3,4 @@
 *.out
 
 build/
-
+support/wrapper/include/OpenCLWrapper/SystemConfig.h
