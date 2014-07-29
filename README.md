@@ -1,10 +1,10 @@
 ==============================================================
            
-                     OpenCL Visualiser
+                 #  OpenCL Visualiser
            
 ==============================================================
 
-July 2014  Ewan Crawford[ewan.cr@gmail.com]
+###July 2014  Ewan Crawford[ewan.cr@gmail.com]
 
 //////////////////////// Introduction ////////////////////////////
 
@@ -31,7 +31,7 @@ account and all plots are of individual accesses.
 
 
 This project is based on my undergraduate project at Edinburgh University. The dissertation for which can 
-be found in /support/dissertation.pdf bitbucket.org/gnarf/axtor/
+be found in /support/dissertation.pdf
 
 
 Example graphs from polybench benchmarks that are rearranged using the scheduler.
